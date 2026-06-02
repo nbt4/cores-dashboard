@@ -3,6 +3,7 @@ package handlers
 import (
 	"io"
 	"net/http"
+	"path"
 	"strings"
 	"time"
 
@@ -35,27 +36,33 @@ func (h *AdminProxyHandler) ProxyWarehouse(w http.ResponseWriter, r *http.Reques
 
 // ProxyPlanner forwards both /api/v1/planner/* and /api/v1/proxy/planner/* → plannercore:8080
 func (h *AdminProxyHandler) ProxyPlanner(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
+	targetPath := r.URL.Path
 	// Admin proxy: /api/v1/proxy/planner/* → /api/v1/planner/*
-	if strings.HasPrefix(path, "/api/v1/proxy/planner") {
-		remaining := strings.TrimPrefix(path, "/api/v1/proxy/planner")
-		if remaining == "" {
-			remaining = "/"
-		}
-		path = "/api/v1/planner" + remaining
+	if strings.HasPrefix(targetPath, "/api/v1/proxy/planner") {
+		remaining := strings.TrimPrefix(targetPath, "/api/v1/proxy/planner")
+		targetPath = "/api/v1/planner" + path.Clean(remaining)
 	}
-	// Direct proxy: /api/v1/planner/* → forward as-is
-	h.proxy(w, r, h.cfg.PlannercoreURL+path)
+	// Ensure path stays within /api/v1/planner/
+	if !strings.HasPrefix(path.Clean(targetPath), "/api/v1/planner") {
+		http.Error(w, `{"error":"invalid path"}`, http.StatusBadRequest)
+		return
+	}
+	h.proxy(w, r, h.cfg.PlannercoreURL+targetPath)
 }
 
 // ProxyPlannerSpa forwards /planner/* → plannercore:8080/* (serves Plannercore frontend)
 func (h *AdminProxyHandler) ProxyPlannerSpa(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/planner")
-	if path == "" {
-		path = "/"
+	p := strings.TrimPrefix(r.URL.Path, "/planner")
+	if p == "" {
+		p = "/"
+	}
+	// Prevent path traversal
+	if cleaned := path.Clean(p); cleaned != p && p != "/" {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
 	}
 	// Also pass query string
-	target := h.cfg.PlannercoreURL + path
+	target := h.cfg.PlannercoreURL + p
 	if r.URL.RawQuery != "" {
 		target += "?" + r.URL.RawQuery
 	}
