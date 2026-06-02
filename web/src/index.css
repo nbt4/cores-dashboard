@@ -1,0 +1,252 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-accent-red: #D0021B;
+  --color-dark: #0B0B0B;
+  --color-dark-100: #111111;
+  --color-dark-200: #161616;
+  --color-dark-300: #1F1F1F;
+  --color-dark-400: #2A2A2A;
+  --color-light: #FFFFFF;
+  --color-light-100: #F5F5F5;
+  --color-light-200: #EAEAEA;
+  --color-text-muted: #A0A0A0;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-strong: rgba(255, 255, 255, 0.14);
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+:root {
+  /* Semantic aliases — use these in TSX inline styles */
+  --accent-red: #D0021B;
+  --accent-red-hover: #A00115;
+  --accent-red-rgb: 208, 2, 27;
+  --accent-red-light: #f87171;
+
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A0;
+  --text-tertiary: #606060;
+  --text-inverse: #111111;
+
+  --surface-1: #111111;
+  --surface-2: #161616;
+  --surface-3: #1F1F1F;
+  --surface-4: #2A2A2A;
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  --bg-subtle: rgba(255, 255, 255, 0.04);
+  --bg-hover: rgba(255, 255, 255, 0.08);
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+
+  --shadow-accent: 0 2px 8px rgba(208, 2, 27, 0.3);
+  --shadow-accent-lg: 0 4px 14px rgba(208, 2, 27, 0.25);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.6);
+
+  /* LED indicator colors */
+  --color-led-green: #00FF00;
+  --color-led-red: #FF0000;
+  --color-led-orange: #FF7A00;
+
+  --gradient-accent: linear-gradient(135deg, #D0021B 0%, #6b0010 100%);
+  --gradient-primary: linear-gradient(135deg, #1e3a5f 0%, #0f1f33 100%);
+
+  /* RGB channel variants */
+  --color-dark-rgb: 11, 11, 11;
+  --color-dark-100-rgb: 17, 17, 17;
+  --color-dark-200-rgb: 22, 22, 22;
+  --color-dark-300-rgb: 31, 31, 31;
+  --color-dark-400-rgb: 42, 42, 42;
+  --color-light-rgb: 255, 255, 255;
+  --color-light-100-rgb: 245, 245, 245;
+  --color-light-200-rgb: 234, 234, 234;
+  --color-text-muted-rgb: 160, 160, 160;
+
+  /* Extended palette */
+  --color-dark-250: #1a1a1a;
+  --color-dark-250-rgb: 26, 26, 26;
+
+  --color-success: #22c55e;
+  --color-success-rgb: 34, 197, 94;
+  --color-warning: #eab308;
+  --color-warning-rgb: 234, 179, 8;
+  --color-danger: #f87171;
+  --color-danger-rgb: 248, 113, 113;
+  --color-info: #60a5fa;
+  --color-info-rgb: 96, 165, 250;
+  --color-red-600: #dc2626;
+  --color-red-600-rgb: 220, 38, 38;
+
+  --transition-normal: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 0.15s ease;
+}
+
+/* ===== BASE ===== */
+/* NOTE: No global reset here — Tailwind v4 unlayered CSS overrides @layer utilities.
+   Only set properties that Tailwind's Preflight doesn't cover. */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-dark);
+  color: var(--color-light);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html.modal-open,
+body.modal-open {
+  overflow: hidden;
+}
+
+body.modal-open {
+  width: 100vw;
+}
+
+/* ===== SCROLLBAR ===== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--color-light-rgb), 0.15) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-light-rgb), 0.15);
+  border-radius: 3px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--color-light-rgb), 0.25);
+}
+
+/* ===== CARD SYSTEM ===== */
+/* Solid card — primary surface, no transparency noise */
+.card {
+  background-color: var(--color-dark-100);
+  border: 1px solid rgba(var(--color-light-rgb), 0.08);
+  border-radius: var(--radius-lg);
+}
+
+.card-elevated {
+  background-color: var(--color-dark-200);
+  border: 1px solid rgba(var(--color-light-rgb), 0.08);
+  border-radius: var(--radius-lg);
+}
+
+/* Keep glass-dark for header/sidebar (backdrop-blur effect) */
+.glass-dark {
+  background-color: rgba(var(--color-dark-rgb), 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(var(--color-light-rgb), 0.08);
+}
+
+/* Keep glass for subtle overlays */
+.glass {
+  background-color: rgba(var(--color-light-rgb), 0.04);
+  border: 1px solid rgba(var(--color-light-rgb), 0.08);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, var(--color-accent-red), var(--color-red-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ===== FORM ELEMENTS ===== */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="date"],
+textarea,
+select {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  background-color: var(--color-dark-200);
+  color: var(--color-light);
+  border: 1px solid rgba(var(--color-light-rgb), 0.12);
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="date"]:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-accent-red);
+  box-shadow: 0 0 0 3px rgba(var(--color-accent-red-rgb), 0.15);
+  background-color: var(--color-dark-250);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(var(--color-light-rgb), 0.35);
+}
+
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a0a0a0' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.5rem;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+select option {
+  background-color: var(--color-dark-250);
+  color: var(--color-light);
+}
+
+/* ===== BADGE UTILITIES ===== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.badge-success { background: rgba(var(--color-success-rgb), 0.12); color: var(--color-success); border: 1px solid rgba(var(--color-success-rgb), 0.2); }
+.badge-warning { background: rgba(var(--color-warning-rgb), 0.12); color: var(--color-warning); border: 1px solid rgba(var(--color-warning-rgb), 0.2); }
+.badge-danger  { background: rgba(var(--color-accent-red-rgb), 0.12); color: var(--color-danger); border: 1px solid rgba(var(--color-accent-red-rgb), 0.2); }
+.badge-info    { background: rgba(var(--color-info-rgb), 0.12); color: var(--color-info); border: 1px solid rgba(var(--color-info-rgb), 0.2); }
+.badge-neutral { background: rgba(var(--color-light-rgb), 0.06); color: var(--color-text-muted); border: 1px solid rgba(var(--color-light-rgb), 0.1); }
+
+/* ===== TRANSITIONS ===== */
+@media (prefers-reduced-motion: no-preference) {
+  .transition-smooth {
+    transition: all var(--transition-normal);
+  }
+}
