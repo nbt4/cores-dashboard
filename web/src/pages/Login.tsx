@@ -36,14 +36,13 @@ export function Login() {
 
           {/* Logo */}
           <div className="flex flex-col items-center gap-3">
-            <div className="w-14 h-14 bg-accent-red rounded-xl flex items-center justify-center"
-              style={{ boxShadow: '0 0 28px rgba(var(--accent-red-rgb), 0.35)' }}>
-              <span className="text-white font-black text-2xl">C</span>
-            </div>
-            <div className="text-center">
-              <p className="text-white font-black text-2xl tracking-[0.25em]">CORES</p>
-              <p className="text-gray-500 text-xs mt-0.5">Management System</p>
-            </div>
+            <img
+              src="/logos/cores_white_full.svg"
+              alt="Cores"
+              className="h-12"
+              style={{ filter: 'drop-shadow(0 0 18px rgba(var(--accent-red-rgb), 0.3))' }}
+            />
+            <p className="text-gray-500 text-xs">Management System</p>
           </div>
 
           {/* Form */}

@@ -49,12 +49,12 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3 px-3 py-4 border-b border-white/5 flex-shrink-0">
-        <div
-          className="w-8 h-8 bg-accent-red rounded-lg flex items-center justify-center flex-shrink-0 shadow-[0_0_14px_rgba(var(--accent-red-rgb),0.3)]"
-        >
-          <span className="text-white font-black text-sm">C</span>
-        </div>
-        {expanded && <span className="text-white font-black tracking-widest text-sm">CORES</span>}
+        <img
+          src="/logos/cores_white_full.svg"
+          alt="Cores"
+          className={`flex-shrink-0 ${expanded ? 'h-7' : 'h-7'}`}
+          style={{ filter: 'drop-shadow(0 0 10px rgba(var(--accent-red-rgb), 0.25))' }}
+        />
       </div>
 
       {/* Nav */}
@@ -170,12 +170,12 @@ export function Layout({ children }: { children: ReactNode }) {
           className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-300 hover:bg-white/5">
           <Menu className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-accent-red rounded-md flex items-center justify-center shadow-[0_0_10px_rgba(var(--accent-red-rgb),0.3)]">
-            <span className="text-white font-black text-xs">C</span>
-          </div>
-          <span className="text-white font-black tracking-widest text-sm">CORES</span>
-        </div>
+        <img
+          src="/logos/cores_white_full.svg"
+          alt="Cores"
+          className="h-6"
+          style={{ filter: 'drop-shadow(0 0 8px rgba(var(--accent-red-rgb), 0.2))' }}
+        />
       </header>
 
       {/* ── MOBILE drawer overlay ───────────────────────────── */}
