@@ -52,8 +52,8 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
         <img
           src="/logos/cores_white_full.svg"
           alt="Cores"
-          className={`flex-shrink-0 ${expanded ? 'h-7' : 'h-7'}`}
-          style={{ filter: 'drop-shadow(0 0 10px rgba(var(--accent-red-rgb), 0.25))' }}
+          className="flex-shrink-0 h-9"
+          style={{ filter: 'drop-shadow(0 0 14px rgba(var(--accent-red-rgb), 0.3))' }}
         />
       </div>
 
@@ -173,8 +173,8 @@ export function Layout({ children }: { children: ReactNode }) {
         <img
           src="/logos/cores_white_full.svg"
           alt="Cores"
-          className="h-6"
-          style={{ filter: 'drop-shadow(0 0 8px rgba(var(--accent-red-rgb), 0.2))' }}
+          className="h-7"
+          style={{ filter: 'drop-shadow(0 0 12px rgba(var(--accent-red-rgb), 0.25))' }}
         />
       </header>
 

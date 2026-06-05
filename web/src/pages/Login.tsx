@@ -39,7 +39,7 @@ export function Login() {
             <img
               src="/logos/cores_white_full.svg"
               alt="Cores"
-              className="h-12"
+              className="h-14"
               style={{ filter: 'drop-shadow(0 0 18px rgba(var(--accent-red-rgb), 0.3))' }}
             />
             <p className="text-gray-500 text-xs">Management System</p>
