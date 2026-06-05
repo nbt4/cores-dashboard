@@ -37,7 +37,7 @@ export function Login() {
           {/* Logo */}
           <div className="flex flex-col items-center gap-3">
             <img
-              src="/logos/cores_white_full.svg"
+              src="/logos/cores_white_side.svg"
               alt="Cores"
               className="h-14"
               style={{ filter: 'drop-shadow(0 0 18px rgba(var(--accent-red-rgb), 0.3))' }}
