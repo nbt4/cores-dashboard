@@ -16,11 +16,14 @@ import (
 
 	"github.com/rs/zerolog"
 
+	"coresdashboard/internal/admin"
+	"coresdashboard/internal/audit"
 	"coresdashboard/internal/config"
 	"coresdashboard/internal/database"
 	"coresdashboard/internal/handlers"
 	"coresdashboard/internal/metrics"
 	"coresdashboard/internal/middleware"
+	"coresdashboard/internal/proxy"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -44,10 +47,34 @@ func main() {
 		metrics.DBConnectionsOpen.Set(float64(sqlDB.Stats().OpenConnections))
 	}
 
+	// Audit logger
+	auditLogger := audit.NewAuditLogger(sqlDB)
+
+	// API Gateway proxy
+	gatewayProxy := proxy.NewHandler(cfg.RentalCoreURL, cfg.WarehouseCoreURL, cfg.PlannercoreURL)
+
+	// requireAdmin wrapper
+	requireAdmin := func(next http.Handler) http.Handler {
+		return middleware.RequireAdmin(cfg, next)
+	}
+
 	mux := http.NewServeMux()
 
 	// Prometheus metrics endpoint
 	mux.Handle("GET /metrics", promhttp.Handler())
+
+	// Health dashboard (admin only)
+	healthHandler := admin.NewHealthHandler(cfg, db)
+	mux.HandleFunc("GET /api/v1/admin/health", healthHandler.ServeHTTP)
+
+	// Audit log (admin only)
+	auditHandler := audit.NewAuditHandler(sqlDB)
+	mux.HandleFunc("GET /api/v1/admin/audit", auditHandler.ServeHTTP)
+
+	// API Gateway proxy routes (admin only, with audit logging)
+	mux.Handle("/api/v1/rental/", audit.AuditMiddleware(auditLogger, "rental")(requireAdmin(gatewayProxy.RentalProxy())))
+	mux.Handle("/api/v1/warehouse/", audit.AuditMiddleware(auditLogger, "warehouse")(requireAdmin(gatewayProxy.WarehouseProxy())))
+	mux.Handle("/api/v1/planner/", audit.AuditMiddleware(auditLogger, "planner")(requireAdmin(gatewayProxy.PlannerProxy())))
 
 	// Health endpoint (before auth middleware)
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -113,8 +140,6 @@ func main() {
 				proxyHandler.ProxyWarehouse(w, r)
 			case strings.HasPrefix(r.URL.Path, "/api/v1/proxy/planner"):
 				proxyHandler.ProxyPlanner(w, r)
-			case strings.HasPrefix(r.URL.Path, "/api/v1/planner"):
-				proxyHandler.ProxyPlanner(w, r)
 			default:
 				http.NotFound(w, r)
 			}
@@ -123,7 +148,6 @@ func main() {
 	mux.Handle("/api/v1/auth/me", protected)
 	mux.Handle("/api/v1/analytics/", protected)
 	mux.Handle("/api/v1/proxy/", adminProtected)
-	mux.Handle("/api/v1/planner/", adminProtected)
 	mux.Handle("/api/v1/admin/", adminProtected)
 
 	// Plannercore SPA proxy (public — auth handled by Plannercore itself)
