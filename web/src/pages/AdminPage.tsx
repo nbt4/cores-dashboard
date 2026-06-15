@@ -14,6 +14,7 @@ import { RolesTab } from '../components/admin/RolesTab';
 import { APISettingsTab } from '../components/admin/APISettingsTab';
 import { APIKeysTab } from '../components/admin/APIKeysTab';
 import { ExportTab } from '../components/admin/ExportTab';
+import { BrandingTab } from '../components/admin/BrandingTab';
 
 const tabComponents: Record<string, React.ElementType> = {
   contacts: ContactsTab,
@@ -31,6 +32,7 @@ const tabComponents: Record<string, React.ElementType> = {
   apisettings: APISettingsTab,
   apikeys: APIKeysTab,
   export: ExportTab,
+  branding: BrandingTab,
 };
 
 export function AdminPage() {

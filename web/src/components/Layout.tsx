@@ -1,30 +1,32 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home, Settings, LogOut, User, ExternalLink, Menu, X, ChevronDown,
+  Home, LogOut, User, ExternalLink, Menu, X, ChevronDown,
   Users, Shield, Layers, Lightbulb, Cpu, FolderTree, Tag, Ruler,
-  Database, KeyRound, Download, Cable, ShoppingCart, BookUser, Wrench,
+  Database, KeyRound, Download, Cable, ShoppingCart, BookUser, Wrench, Palette,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppConfig } from '../hooks/useAppConfig';
+import { useBranding } from '../hooks/useBranding';
 
 const ADMIN_ITEMS = [
-  { path: '/admin/contacts',     label: 'Kontakte',           icon: BookUser },
-  { path: '/admin/services',    label: 'Dienstleistungen',   icon: Wrench },
-  { path: '/admin/users',       label: 'Benutzer',          icon: Users },
-  { path: '/admin/roles',       label: 'Rollen',            icon: Shield },
-  { path: '/admin/zonetypes',   label: 'Lagertypen',        icon: Layers },
-  { path: '/admin/led',         label: 'LED-Verhalten',     icon: Lightbulb },
-  { path: '/admin/controllers', label: 'ESP-Controller',    icon: Cpu },
-  { path: '/admin/categories',  label: 'Kategorien',        icon: FolderTree },
-  { path: '/admin/brands',      label: 'Marken & Hersteller',            icon: Tag },
-  { path: '/admin/counttypes',  label: 'Maßeinheiten',      icon: Ruler },
-  { path: '/admin/cables',      label: 'Kabel-Typen & Anschlüsse', icon: Cable },
-  { path: '/admin/rentalfields', label: 'Mietprodukt-Felder', icon: ShoppingCart },
-  { path: '/admin/apisettings', label: 'API-Einstellungen', icon: Database },
-  { path: '/admin/apikeys',     label: 'API-Keys',          icon: KeyRound },
-  { path: '/admin/export',      label: 'CSV-Export',        icon: Download },
+  { path: '/admin/contacts',     label: 'Kontakte',              icon: BookUser },
+  { path: '/admin/services',     label: 'Dienstleistungen',      icon: Wrench },
+  { path: '/admin/users',        label: 'Benutzer',              icon: Users },
+  { path: '/admin/roles',        label: 'Rollen',                icon: Shield },
+  { path: '/admin/zonetypes',    label: 'Lagertypen',            icon: Layers },
+  { path: '/admin/led',          label: 'LED-Verhalten',         icon: Lightbulb },
+  { path: '/admin/controllers',  label: 'ESP-Controller',        icon: Cpu },
+  { path: '/admin/categories',   label: 'Kategorien',            icon: FolderTree },
+  { path: '/admin/brands',       label: 'Marken & Hersteller',   icon: Tag },
+  { path: '/admin/counttypes',   label: 'Maßeinheiten',          icon: Ruler },
+  { path: '/admin/cables',       label: 'Kabel-Typen & Anschlüsse', icon: Cable },
+  { path: '/admin/rentalfields', label: 'Mietprodukt-Felder',    icon: ShoppingCart },
+  { path: '/admin/apisettings',  label: 'API-Einstellungen',     icon: Database },
+  { path: '/admin/apikeys',      label: 'API-Keys',              icon: KeyRound },
+  { path: '/admin/export',       label: 'CSV-Export',            icon: Download },
+  { path: '/admin/branding',     label: 'Branding',              icon: Palette },
 ];
 
 function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () => void }) {
@@ -32,11 +34,7 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const onAdmin = location.pathname.startsWith('/admin');
-  const [adminOpen, setAdminOpen] = useState(onAdmin);
-
-  useEffect(() => { if (onAdmin) setAdminOpen(true); }, [onAdmin]);
-
+  const branding = useBranding();
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = async () => { await logout(); navigate('/login'); };
@@ -50,10 +48,10 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
       {/* Logo */}
       <div className="flex items-center gap-3 px-3 py-4 border-b border-white/5 flex-shrink-0">
         <img
-          src="/logos/cores_white_side.svg"
-          alt="Cores"
+          src={branding.sidebarLogo}
+          alt={branding.companyName}
           className="flex-shrink-0 h-12"
-          style={{ filter: 'drop-shadow(0 0 14px rgba(var(--accent-red-rgb), 0.3))' }}
+          style={{ filter: 'drop-shadow(0 0 14px rgba(var(--accent-red-rgb), 0.3))', height: `${48 * branding.logoSizeSidebar / 100}px` }}
         />
       </div>
 
@@ -65,43 +63,14 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
           {expanded && <span>Dashboard</span>}
         </Link>
 
-        {/* Administration */}
-        <div>
-          <button
-            onClick={() => {
-              if (expanded) {
-                setAdminOpen(o => !o);
-              } else {
-                navigate('/admin/users');
-                onClose();
-              }
-            }}
-            className={`w-full flex items-center gap-3 px-2 py-2 rounded-lg text-sm font-medium transition-colors
-              ${onAdmin ? 'bg-accent-red/10 text-accent-red' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}
-          >
-            <Settings className="w-5 h-5 flex-shrink-0" />
-            {expanded && (
-              <>
-                <span className="flex-1 text-left">Administration</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${adminOpen ? 'rotate-180' : ''}`} />
-              </>
-            )}
-          </button>
-
-          {/* Sub-items */}
-          {expanded && adminOpen && (
-            <div className="ml-3 mt-0.5 pl-3 border-l border-white/10 flex flex-col gap-0.5">
-              {ADMIN_ITEMS.map(({ path, label, icon: Icon }) => (
-                <Link key={path} to={path} onClick={onClose}
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs font-medium transition-colors
-                    ${isActive(path) ? 'text-white bg-white/8' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}>
-                  <Icon className="w-3.5 h-3.5 flex-shrink-0" />
-                  <span>{label}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Admin items — flat list, no collapsible parent */}
+        {ADMIN_ITEMS.map(({ path, label, icon: Icon }) => (
+          <Link key={path} to={path} onClick={onClose}
+            className={linkCls(isActive(path))}>
+            <Icon className="w-5 h-5 flex-shrink-0" />
+            {expanded && <span>{label}</span>}
+          </Link>
+        ))}
 
         {/* External links */}
         <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-0.5">
@@ -156,6 +125,7 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
 export function Layout({ children }: { children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [desktopExpanded, setDesktopExpanded] = useState(true);
+  const layoutBranding = useBranding();
 
   // Close drawer on route change
   const location = useLocation();
@@ -171,10 +141,10 @@ export function Layout({ children }: { children: ReactNode }) {
           <Menu className="w-5 h-5" />
         </button>
         <img
-          src="/logos/cores_white_side.svg"
-          alt="Cores"
+          src={layoutBranding.sidebarLogo}
+          alt={layoutBranding.companyName}
           className="h-9"
-          style={{ filter: 'drop-shadow(0 0 12px rgba(var(--accent-red-rgb), 0.25))' }}
+          style={{ filter: 'drop-shadow(0 0 12px rgba(var(--accent-red-rgb), 0.25))', height: `${36 * layoutBranding.logoSizeSidebar / 100}px` }}
         />
       </header>
 

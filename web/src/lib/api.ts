@@ -210,3 +210,50 @@ export const contactsApi = {
   update: (id: number, data: ContactPayload) => rentalApi.put(`/customers/${id}`, data),
   delete: (id: number) => rentalApi.delete(`/customers/${id}`),
 };
+
+// ---- Branding API types ----
+
+export interface BrandingConfig {
+  id: number;
+  companyName: string;
+  brandName: string;
+  logoCoresSidebar: string | null;
+  logoCoresLogin: string | null;
+  logoRentalSidebar: string | null;
+  logoRentalLogin: string | null;
+  logoWarehouseSidebar: string | null;
+  logoWarehouseLogin: string | null;
+  logoPlannerSidebar: string | null;
+  logoPlannerLogin: string | null;
+  faviconPath: string | null;
+  logoSizeSidebar: number;
+  logoSizeLogin: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Helper: get logo path for a service+position combo
+export function getLogoPath(cfg: BrandingConfig | null, service: string, position: 'sidebar' | 'login' | 'favicon'): string | null {
+  if (!cfg) return null;
+  if (position === 'favicon') return cfg.faviconPath;
+  const key = `logo${service.charAt(0).toUpperCase() + service.slice(1)}${position.charAt(0).toUpperCase() + position.slice(1)}`;
+  const cfgAny = cfg as unknown as Record<string, unknown>;
+  return (cfgAny[key] as string) || null;
+}
+
+export const brandingApi = {
+  get: () => api.get<BrandingConfig>('/admin/branding'),
+  update: (data: Partial<Pick<BrandingConfig, 'companyName' | 'brandName' | 'logoSizeSidebar' | 'logoSizeLogin'>>) =>
+    api.put<BrandingConfig>('/admin/branding', data),
+  uploadLogo: (service: string, position: string, file: File) => {
+    const formData = new FormData();
+    formData.append('service', service);
+    formData.append('position', position);
+    formData.append('file', file);
+    return api.post<{ path: string; column: string }>('/admin/branding/logo', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  deleteLogo: (service: string, position: string) =>
+    api.delete<{ status: string }>('/admin/branding/logo', { params: { service, position } }),
+};

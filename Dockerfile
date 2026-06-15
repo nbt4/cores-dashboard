@@ -19,8 +19,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server/
 
 # Stage 3: Runtime
 FROM alpine:3.21
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata && mkdir -p /var/lib/branding/logos
 WORKDIR /app
 COPY --from=builder /app/server .
+# FIXED: Container runs as root — add non-root USER directive
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup && chown -R appuser:appgroup /var/lib/branding /app
+USER appuser:appgroup
 EXPOSE 8080
 CMD ["./server"]

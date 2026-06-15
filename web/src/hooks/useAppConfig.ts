@@ -1,9 +1,18 @@
 import { useEffect, useState } from 'react';
 
+export interface BrandingInfo {
+  companyName: string;
+  brandName: string;
+  logoSizeSidebar: number;
+  logoSizeLogin: number;
+  hasFavicon: boolean;
+}
+
 interface AppConfig {
   rentalUrl: string;
   warehouseUrl: string;
   plannerUrl: string;
+  branding?: BrandingInfo;
 }
 
 let cached: AppConfig | null = null;
@@ -23,4 +32,9 @@ export function useAppConfig() {
   }, []);
 
   return config;
+}
+
+export function useBranding() {
+  const config = useAppConfig();
+  return config?.branding || null;
 }

@@ -3,10 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"sync"
 	"time"
 
 	"coresdashboard/internal/config"
-	"coresdashboard/internal/middleware"
+	commonjwt "github.com/nbt4/cores-common/pkg/jwt"
 	"coresdashboard/internal/models"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -15,12 +16,18 @@ import (
 )
 
 type AuthHandler struct {
-	cfg *config.Config
-	db  *gorm.DB
+	cfg       *config.Config
+	db        *gorm.DB
+	rateLimit map[string]time.Time // FIXED: Login rate limiting
+	rateMu    sync.Mutex           // FIXED: Login rate limiting
 }
 
 func NewAuthHandler(cfg *config.Config, db *gorm.DB) *AuthHandler {
-	return &AuthHandler{cfg: cfg, db: db}
+	return &AuthHandler{
+		cfg:       cfg,
+		db:        db,
+		rateLimit: make(map[string]time.Time), // FIXED: Login rate limiting
+	}
 }
 
 type loginRequest struct {
@@ -29,6 +36,17 @@ type loginRequest struct {
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	// FIXED: Login rate limiting — max 10 attempts per minute per IP
+	ip := r.RemoteAddr
+	h.rateMu.Lock()
+	if last, ok := h.rateLimit[ip]; ok && time.Since(last) < 6*time.Second {
+		h.rateMu.Unlock()
+		jsonError(w, "Too many login attempts. Please wait.", http.StatusTooManyRequests)
+		return
+	}
+	h.rateLimit[ip] = time.Now()
+	h.rateMu.Unlock()
+
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		jsonError(w, "Invalid request", http.StatusBadRequest)
@@ -46,7 +64,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	claims := &middleware.Claims{
+	claims := &commonjwt.Claims{
 		UserID:   user.UserID,
 		Username: user.Username,
 		IsAdmin:  user.IsAdmin,
@@ -97,7 +115,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
-	claims, _ := middleware.GetClaims(r)
+	claims, _ := commonjwt.GetClaims(r)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"user_id":  claims.UserID,

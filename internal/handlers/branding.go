@@ -63,7 +63,7 @@ func (h *BrandingHandler) GetBrandingPublic(svc string) PublicBranding {
 	pb := PublicBranding{
 		CompanyName:     cfg.CompanyName,
 		BrandName:       cfg.BrandName,
-		LogoSizeSidebar: cfg.LogoSideSizebar,
+		LogoSizeSidebar: cfg.LogoSizeSidebar,
 		LogoSizeLogin:   cfg.LogoSizeLogin,
 	}
 	switch svc {
@@ -131,8 +131,8 @@ func (h *BrandingHandler) UpdateBranding(w http.ResponseWriter, r *http.Request)
 	cfg.BrandName = input.BrandName
 
 	// Logo size sliders
-	if input.LogoSideSizebar >= 50 && input.LogoSideSizebar <= 200 {
-		cfg.LogoSideSizebar = input.LogoSideSizebar
+	if input.LogoSizeSidebar >= 50 && input.LogoSizeSidebar <= 200 {
+		cfg.LogoSizeSidebar = input.LogoSizeSidebar
 	}
 	if input.LogoSizeLogin >= 50 && input.LogoSizeLogin <= 200 {
 		cfg.LogoSizeLogin = input.LogoSizeLogin
@@ -529,6 +529,7 @@ func validPosition(s string) bool {
 	return false
 }
 
+// writeJSON delegates to commonresponse.JSON
 func writeJSON(w http.ResponseWriter, status int, v interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

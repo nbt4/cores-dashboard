@@ -1,25 +1,18 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
 	"coresdashboard/internal/config"
 
-	"github.com/golang-jwt/jwt/v5"
+	commonjwt "github.com/nbt4/cores-common/pkg/jwt"
+	golangjwt "github.com/golang-jwt/jwt/v5"
 )
 
 type contextKey string
 
-const UserClaimsKey = contextKey("claims")
-
-type Claims struct {
-	UserID   uint   `json:"uid"`
-	Username string `json:"username"`
-	IsAdmin  bool   `json:"is_admin"`
-	jwt.RegisteredClaims
-}
+const UserClaimsKey = commonjwt.ClaimsKey
 
 func RequireAuth(cfg *config.Config, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -29,9 +22,9 @@ func RequireAuth(cfg *config.Config, next http.Handler) http.Handler {
 			return
 		}
 
-		claims := &Claims{}
-		token, err := jwt.ParseWithClaims(cookie.Value, claims, func(t *jwt.Token) (interface{}, error) {
-			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+		claims := &commonjwt.Claims{}
+		token, err := golangjwt.ParseWithClaims(cookie.Value, claims, func(t *golangjwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*golangjwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 			}
 			return []byte(cfg.JWTSecret), nil
@@ -41,12 +34,24 @@ func RequireAuth(cfg *config.Config, next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), UserClaimsKey, claims)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		r = commonjwt.SetClaims(r, claims)
+		next.ServeHTTP(w, r)
 	})
 }
 
-func GetClaims(r *http.Request) (*Claims, bool) {
-	c, ok := r.Context().Value(UserClaimsKey).(*Claims)
-	return c, ok
+// RequireAdmin wraps RequireAuth and additionally verifies the IsAdmin claim.
+// FIXED: Admin auth bypass — added role check middleware for /api/v1/admin/* and /api/v1/proxy/* routes.
+func RequireAdmin(cfg *config.Config, next http.Handler) http.Handler {
+	return RequireAuth(cfg, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims, ok := commonjwt.GetClaims(r)
+		if !ok || !claims.IsAdmin {
+			http.Error(w, `{"error":"Forbidden"}`, http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}))
+}
+
+func GetClaims(r *http.Request) (*commonjwt.Claims, bool) {
+	return commonjwt.GetClaims(r)
 }

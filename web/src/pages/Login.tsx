@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useBranding } from '../hooks/useBranding';
 
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const branding = useBranding();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -34,15 +36,14 @@ export function Login() {
         <div className="rounded-2xl p-8 flex flex-col items-center gap-6"
           style={{ background: 'rgba(var(--color-dark-100-rgb), 0.92)', backdropFilter: 'blur(12px)', border: '1px solid var(--border-subtle)' }}>
 
-          {/* Logo */}
           <div className="flex flex-col items-center gap-3">
             <img
-              src="/logos/cores_white_side.svg"
-              alt="Cores"
+              src={branding.loginLogo}
+              alt={branding.companyName}
               className="h-20"
-              style={{ filter: 'drop-shadow(0 0 18px rgba(var(--accent-red-rgb), 0.3))' }}
+              style={{ filter: 'drop-shadow(0 0 18px rgba(var(--accent-red-rgb), 0.3))', height: `${80 * branding.logoSizeLogin / 100}px` }}
             />
-            <p className="text-gray-500 text-xs">Management System</p>
+            <p className="text-gray-500 text-xs">{branding.companyName}</p>
           </div>
 
           {/* Form */}

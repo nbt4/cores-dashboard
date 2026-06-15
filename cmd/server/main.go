@@ -19,7 +19,10 @@ import (
 	"coresdashboard/internal/config"
 	"coresdashboard/internal/database"
 	"coresdashboard/internal/handlers"
+	"coresdashboard/internal/metrics"
 	"coresdashboard/internal/middleware"
+
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 //go:embed all:dist
@@ -35,7 +38,16 @@ func main() {
 		log.Fatal().Err(err).Msg("DB connect failed")
 	}
 
+	// Set initial DB connection gauge
+	sqlDB, err := db.DB()
+	if err == nil {
+		metrics.DBConnectionsOpen.Set(float64(sqlDB.Stats().OpenConnections))
+	}
+
 	mux := http.NewServeMux()
+
+	// Prometheus metrics endpoint
+	mux.Handle("GET /metrics", promhttp.Handler())
 
 	// Health endpoint (before auth middleware)
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -180,13 +192,16 @@ func main() {
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 
+	// Wrap with metrics middleware
+	handler := metrics.Middleware(mux)
+
 	// Graceful shutdown
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	srv := &http.Server{
 		Addr:    addr,
-		Handler: mux,
+		Handler: handler,
 	}
 
 	go func() {
@@ -206,11 +221,8 @@ func main() {
 		log.Error().Err(err).Msg("server shutdown error")
 	}
 
-	sqlDB, err := db.DB()
-	if err == nil {
-		if err := sqlDB.Close(); err != nil {
-			log.Error().Err(err).Msg("db close error")
-		}
+	if err := sqlDB.Close(); err != nil {
+		log.Error().Err(err).Msg("db close error")
 	}
 	log.Info().Msg("shutdown complete")
 }
