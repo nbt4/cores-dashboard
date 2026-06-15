@@ -1,3 +1,4 @@
+import { toast } from '../../lib/toast';
 import { useState, useEffect, useMemo } from 'react';
 import { Users, Shield, Save } from 'lucide-react';
 import { warehouseApi as api } from '../../lib/api';
@@ -45,7 +46,7 @@ export function RolesTab() {
       setUsers(usersRes.data);
       setRoles(rolesRes.data);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      toast.error('Failed to load data:', error);
     }
   };
 

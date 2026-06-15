@@ -1,4 +1,5 @@
 // File: cores-dashboard/web/src/pages/Dashboard.tsx
+import { toast } from '../lib/toast';
 import { useEffect, useState } from 'react';
 import { ExternalLink, Briefcase, Package, TrendingUp, Wrench, AlertTriangle, BarChart2, Kanban } from 'lucide-react';
 import { api } from '../lib/api';
@@ -31,7 +32,7 @@ export function Dashboard() {
   useEffect(() => {
     api.get('/analytics/summary')
       .then(r => setStats(r.data as AnalyticsSummary))
-      .catch(console.error);
+      .catch((e) => toast.error(String(e)));
   }, []);
 
   const fmt = (n?: number) => n !== undefined ? n.toLocaleString('de-DE') : '—';

@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/rs/zerolog"
 
 	"coresdashboard/internal/config"
 )
+
+var analyticsLog = zerolog.New(os.Stderr).With().Timestamp().Str("component", "analytics").Logger()
 
 type AnalyticsHandler struct {
 	cfg    *config.Config
@@ -48,7 +52,7 @@ func (h *AnalyticsHandler) fetchRental(token string) map[string]interface{} {
 	url := h.cfg.RentalCoreURL + "/api/v1/analytics/revenue?period=30days"
 	data, err := h.fetchWithToken(url, token)
 	if err != nil {
-		log.Printf("analytics: rental fetch error: %v", err)
+		analyticsLog.Error().Err(err).Msg("rental fetch error")
 		return map[string]interface{}{"error": "unavailable"}
 	}
 	return data
@@ -58,7 +62,7 @@ func (h *AnalyticsHandler) fetchWarehouse(token string) map[string]interface{} {
 	url := h.cfg.WarehouseCoreURL + "/api/v1/dashboard/stats"
 	data, err := h.fetchWithToken(url, token)
 	if err != nil {
-		log.Printf("analytics: warehouse fetch error: %v", err)
+		analyticsLog.Error().Err(err).Msg("warehouse fetch error")
 		return map[string]interface{}{"error": "unavailable"}
 	}
 	return data
@@ -68,7 +72,7 @@ func (h *AnalyticsHandler) fetchMaintenance(token string) map[string]interface{}
 	url := h.cfg.WarehouseCoreURL + "/api/v1/maintenance/stats"
 	data, err := h.fetchWithToken(url, token)
 	if err != nil {
-		log.Printf("analytics: maintenance fetch error: %v", err)
+		analyticsLog.Error().Err(err).Msg("maintenance fetch error")
 		return map[string]interface{}{"error": "unavailable"}
 	}
 	return data

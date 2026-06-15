@@ -1,3 +1,4 @@
+import { toast } from '../../lib/toast';
 import { useState } from 'react';
 import { Download, Package, Building2, Tag, Layers, Cable, Briefcase, FileText, TrendingUp } from 'lucide-react';
 
@@ -121,7 +122,7 @@ export function ExportTab() {
       });
       window.dispatchEvent(event);
     } catch (error) {
-      console.error('Export error:', error);
+      toast.error('Export error:', error);
       const event = new CustomEvent('toast', {
         detail: {
           type: 'error',

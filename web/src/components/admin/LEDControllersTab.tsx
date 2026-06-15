@@ -1,3 +1,4 @@
+import { toast } from '../../lib/toast';
 import { useEffect, useMemo, useState } from 'react';
 import { ledApi, warehouseApi as api, type LEDController, type LEDControllerPayload, type ZoneTypeDefinition } from '../../lib/api';
 import { Plus, Save, X, RefreshCcw, Trash2, Cpu, Settings, RotateCw } from 'lucide-react';
@@ -73,7 +74,7 @@ export function LEDControllersTab() {
       setControllers(controllerRes.data);
       setZoneTypes(zoneTypeRes.data);
     } catch (error) {
-      console.error('Failed to load controllers:', error);
+      toast.error('Failed to load controllers:', error);
       setMessage('Fehler beim Laden der Controller.');
     } finally {
       setLoading(false);
