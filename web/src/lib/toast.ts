@@ -3,12 +3,6 @@
 
 type ToastType = 'error' | 'success' | 'info';
 
-interface Toast {
-  id: number;
-  message: string;
-  type: ToastType;
-}
-
 let toastId = 0;
 let container: HTMLDivElement | null = null;
 
@@ -56,6 +50,7 @@ function showToast(message: string, type: ToastType): void {
     max-width: 400px;
     word-break: break-word;
   `;
+  el.id = `toast-${id}`;
   el.textContent = message;
 
   // Inject keyframes once
@@ -99,7 +94,16 @@ function showToast(message: string, type: ToastType): void {
 }
 
 export const toast = {
-  error: (message: string) => showToast(message, 'error'),
-  success: (message: string) => showToast(message, 'success'),
-  info: (message: string) => showToast(message, 'info'),
+  error: (message: string, detail?: unknown) => {
+    const msg = detail instanceof Error ? `${message} ${detail.message}` : detail ? `${message} ${String(detail)}` : message;
+    showToast(msg, 'error');
+  },
+  success: (message: string, detail?: unknown) => {
+    const msg = detail ? `${message} ${String(detail)}` : message;
+    showToast(msg, 'success');
+  },
+  info: (message: string, detail?: unknown) => {
+    const msg = detail ? `${message} ${String(detail)}` : message;
+    showToast(msg, 'info');
+  },
 };
