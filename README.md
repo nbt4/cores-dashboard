@@ -7,6 +7,8 @@
 ## Features
 
 - **Single Sign-On (SSO)** — Einmal anmelden, alle Cores-Services nutzen. Zentrales Login/Logout mit JWT-basiertem Session-Management
+- **Microsoft Entra Identity** — Umschaltbare lokale, Microsoft- oder hybride Benutzerquelle mit gruppenbasierter Synchronisation und Microsoft-Login
+- **Zentrale Microsoft-App** — Eine App-Registrierung für Entra-Benutzer, Cores-Login sowie RentalCore-Kontakt-/Kalenderfunktionen; inklusive Einrichtungs- und Rechtehilfe im Dashboard
 - **Reverse Proxy** — Transparentes Durchreichen von API-Requests an RentalCore, WarehouseCore und Plannercore. Plannercore-SPA nahtlos eingebettet unter `/planner/`
 - **Unified Analytics** — Dashboard-Übersicht mit aggregierten Kennzahlen aus allen Cores-Services (Geräte, Jobs, Auslastung, Umsätze)
 - **Branding & Theming** — Dynamisches Whitelabeling: eigenes Logo, Firmenname und Favicon pro Tenant. Upload über die Admin-Oberfläche
@@ -81,6 +83,9 @@ cores-dashboard:
 |----------|-----------------------------------|---------------------------------------------|
 | `POST`   | `/api/v1/auth/login`              | Benutzer-Login (JSON: username, password)   |
 | `POST`   | `/api/v1/auth/logout`             | Session beenden                             |
+| `GET`    | `/api/v1/auth/methods`            | Aktive Loginmethoden abrufen                |
+| `GET`    | `/api/v1/auth/microsoft/start`    | Microsoft-Anmeldung starten                 |
+| `GET`    | `/api/v1/auth/microsoft/callback` | OAuth-Callback der Entra-App                |
 | `GET`    | `/api/v1/auth/me`                 | Aktuellen Benutzer abrufen (🔒)              |
 | `GET`    | `/api/v1/config`                  | Öffentliche Konfiguration und Cross-Links   |
 | `GET`    | `/api/v1/branding`                | Öffentliche Branding-Daten (Logo, Name)     |
@@ -89,6 +94,10 @@ cores-dashboard:
 | `PUT`    | `/api/v1/admin/branding`          | Branding aktualisieren (🔒 Admin)            |
 | `POST`   | `/api/v1/admin/branding/logo`     | Logo hochladen (🔒 Admin)                    |
 | `DELETE` | `/api/v1/admin/branding/logo`     | Logo löschen (🔒 Admin)                      |
+| `GET/PUT`| `/api/v1/admin/microsoft/settings`| Entra-/M365-Konfiguration (🔒 Admin)         |
+| `POST`   | `/api/v1/admin/microsoft/test`    | App und Gruppenlesezugriff testen (🔒 Admin) |
+| `POST`   | `/api/v1/admin/microsoft/sync`    | Entra-Benutzer synchronisieren (🔒 Admin)    |
+| `GET/POST/PUT/DELETE` | `/api/v1/admin/users` | Zentrale lokale Benutzerverwaltung (🔒 Admin) |
 | `*`      | `/api/v1/proxy/rental/*`          | Proxy zu RentalCore (🔒)                     |
 | `*`      | `/api/v1/proxy/warehouse/*`       | Proxy zu WarehouseCore (🔒)                  |
 | `*`      | `/api/v1/proxy/planner/*`         | Proxy zu Plannercore (🔒)                    |
@@ -96,6 +105,14 @@ cores-dashboard:
 | `GET`    | `/planner/`                       | Plannercore SPA (eingebettet, öffentlich)    |
 
 🔒 = Authentifizierung via `session_id` Cookie erforderlich
+
+### Microsoft Entra einrichten
+
+Die Konfiguration erfolgt unter **Benutzer & Rechte → Microsoft 365 & Entra**. Microsoft-Benutzer werden als Cores-Schattenkonten mit stabiler interner ID gespeichert. Ihre Stammdaten sind im Dashboard schreibgeschützt; Cores-Rollen bleiben unabhängig davon lokal pflegbar. Beim Entfernen aus der konfigurierten Gruppe werden Konten standardmäßig deaktiviert, nicht gelöscht.
+
+Erforderlich sind Tenant-ID, Client-ID, der Client-Secret-**Wert**, die Objekt-ID der erlaubten Gruppe und die öffentliche Cores-URL. Die App benötigt für den Benutzer-Sync die Microsoft-Graph-Anwendungsrechte `User.Read.All` und `GroupMember.Read.All`; für die Anmeldung wird delegiert `User.Read` verwendet. RentalCore benötigt optional zusätzlich `Contacts.ReadWrite`, `Calendars.ReadWrite` und für GAL-/Exchange-Verwaltung die passende Exchange-App-Berechtigung plus RBAC-Zuweisung. Details und die exakte Redirect-URI zeigt das Hilfe-Popup direkt im Dashboard.
+
+Referenzen: [Gruppenmitglieder lesen](https://learn.microsoft.com/en-us/graph/api/group-list-transitivemembers), [Benutzer lesen](https://learn.microsoft.com/en-us/graph/api/user-list), [OAuth Authorization Code](https://learn.microsoft.com/en-us/graph/auth-v2-user).
 
 ---
 

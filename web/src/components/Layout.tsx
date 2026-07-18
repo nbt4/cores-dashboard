@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Home, LogOut, User, ExternalLink, Menu, X, ChevronDown,
   Users, Shield, Layers, Lightbulb, Cpu, FolderTree, Tag, Ruler,
-  Database, KeyRound, Download, Cable, ShoppingCart, BookUser, Wrench, Palette,
+  Database, KeyRound, Download, Cable, ShoppingCart, BookUser, Wrench, Palette, Cloud,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
@@ -24,6 +24,7 @@ const ADMIN_SECTIONS = [
   { label: 'Benutzer & Rechte', items: [
     { path: '/admin/users', label: 'Benutzer', icon: Users },
     { path: '/admin/roles', label: 'Rollen', icon: Shield },
+    { path: '/admin/microsoft', label: 'Microsoft 365 & Entra', icon: Cloud },
   ]},
   { label: 'Geräte & System', items: [
     { path: '/admin/led', label: 'LED-Verhalten', icon: Lightbulb },

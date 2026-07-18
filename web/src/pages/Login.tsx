@@ -1,16 +1,25 @@
-import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState, type FormEvent } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useBranding } from '../hooks/useBranding';
+import { api } from '../lib/api';
 
 export function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const branding = useBranding();
+  const [searchParams] = useSearchParams();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [methods, setMethods] = useState({ localEnabled: true, microsoftEnabled: false });
+
+  useEffect(() => {
+    const callbackError = searchParams.get('error');
+    if (callbackError) setError(callbackError);
+    api.get('/auth/methods').then(response => setMethods(response.data)).catch(() => undefined);
+  }, [searchParams]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -46,8 +55,17 @@ export function Login() {
             <p className="text-gray-500 text-xs">{branding.companyName}</p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
+          {methods.microsoftEnabled && <button type="button" onClick={() => { window.location.href = '/api/v1/auth/microsoft/start'; }}
+            className="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all flex items-center justify-center gap-3 border border-white/15 hover:bg-white/5">
+            <span className="grid grid-cols-2 gap-[2px] w-4 h-4" aria-hidden="true">
+              <span className="bg-[#f25022]" /><span className="bg-[#7fba00]" /><span className="bg-[#00a4ef]" /><span className="bg-[#ffb900]" />
+            </span>
+            Mit Microsoft anmelden
+          </button>}
+
+          {methods.microsoftEnabled && methods.localEnabled && <div className="w-full flex items-center gap-3 text-gray-600 text-xs"><span className="h-px bg-white/10 flex-1" />oder lokal<span className="h-px bg-white/10 flex-1" /></div>}
+
+          {methods.localEnabled && <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3">
             <input
               type="text"
               placeholder="Benutzername"
@@ -65,7 +83,6 @@ export function Login() {
               className="w-full px-4 py-3 rounded-lg"
               required
             />
-            {error && <p className="text-red-400 text-sm text-center">{error}</p>}
             <button
               type="submit"
               disabled={loading}
@@ -74,7 +91,8 @@ export function Login() {
             >
               {loading ? 'Anmelden...' : 'Anmelden'}
             </button>
-          </form>
+          </form>}
+          {error && <p className="text-red-400 text-sm text-center">{error}</p>}
         </div>
       </div>
     </div>
