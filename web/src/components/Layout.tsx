@@ -10,23 +10,29 @@ import { useAuth } from '../contexts/AuthContext';
 import { useAppConfig } from '../hooks/useAppConfig';
 import { useBranding } from '../hooks/useBranding';
 
-const ADMIN_ITEMS = [
-  { path: '/admin/contacts',     label: 'Kontakte',              icon: BookUser },
-  { path: '/admin/services',     label: 'Dienstleistungen',      icon: Wrench },
-  { path: '/admin/users',        label: 'Benutzer',              icon: Users },
-  { path: '/admin/roles',        label: 'Rollen',                icon: Shield },
-  { path: '/admin/zonetypes',    label: 'Lagertypen',            icon: Layers },
-  { path: '/admin/led',          label: 'LED-Verhalten',         icon: Lightbulb },
-  { path: '/admin/controllers',  label: 'ESP-Controller',        icon: Cpu },
-  { path: '/admin/categories',   label: 'Kategorien',            icon: FolderTree },
-  { path: '/admin/brands',       label: 'Marken & Hersteller',   icon: Tag },
-  { path: '/admin/counttypes',   label: 'Maßeinheiten',          icon: Ruler },
-  { path: '/admin/cables',       label: 'Kabel-Typen & Anschlüsse', icon: Cable },
-  { path: '/admin/rentalfields', label: 'Mietprodukt-Felder',    icon: ShoppingCart },
-  { path: '/admin/apisettings',  label: 'API-Einstellungen',     icon: Database },
-  { path: '/admin/apikeys',      label: 'API-Keys',              icon: KeyRound },
-  { path: '/admin/export',       label: 'CSV-Export',            icon: Download },
-  { path: '/admin/branding',     label: 'Branding',              icon: Palette },
+const ADMIN_SECTIONS = [
+  { label: 'Stammdaten', items: [
+    { path: '/admin/contacts', label: 'Kontakte', icon: BookUser },
+    { path: '/admin/services', label: 'Dienstleistungen', icon: Wrench },
+    { path: '/admin/categories', label: 'Kategorien', icon: FolderTree },
+    { path: '/admin/brands', label: 'Marken & Hersteller', icon: Tag },
+    { path: '/admin/counttypes', label: 'Maßeinheiten', icon: Ruler },
+    { path: '/admin/cables', label: 'Kabel-Typen & Anschlüsse', icon: Cable },
+    { path: '/admin/rentalfields', label: 'Mietprodukt-Felder', icon: ShoppingCart },
+    { path: '/admin/zonetypes', label: 'Lagertypen', icon: Layers },
+  ]},
+  { label: 'Benutzer & Rechte', items: [
+    { path: '/admin/users', label: 'Benutzer', icon: Users },
+    { path: '/admin/roles', label: 'Rollen', icon: Shield },
+  ]},
+  { label: 'Geräte & System', items: [
+    { path: '/admin/led', label: 'LED-Verhalten', icon: Lightbulb },
+    { path: '/admin/controllers', label: 'ESP-Controller', icon: Cpu },
+    { path: '/admin/apisettings', label: 'API-Einstellungen', icon: Database },
+    { path: '/admin/apikeys', label: 'API-Keys', icon: KeyRound },
+    { path: '/admin/export', label: 'CSV-Export', icon: Download },
+    { path: '/admin/branding', label: 'Branding', icon: Palette },
+  ]},
 ];
 
 function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () => void }) {
@@ -63,13 +69,18 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
           {expanded && <span>Dashboard</span>}
         </Link>
 
-        {/* Admin items — flat list, no collapsible parent */}
-        {ADMIN_ITEMS.map(({ path, label, icon: Icon }) => (
-          <Link key={path} to={path} onClick={onClose}
-            className={linkCls(isActive(path))}>
-            <Icon className="w-5 h-5 flex-shrink-0" />
-            {expanded && <span>{label}</span>}
-          </Link>
+        {ADMIN_SECTIONS.map(({ label: sectionLabel, items }) => (
+          <div key={sectionLabel} className="mt-3 first:mt-1">
+            {expanded && <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-600">{sectionLabel}</p>}
+            <div className="flex flex-col gap-0.5">
+              {items.map(({ path, label, icon: Icon }) => (
+                <Link key={path} to={path} onClick={onClose} className={linkCls(isActive(path))}>
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  {expanded && <span>{label}</span>}
+                </Link>
+              ))}
+            </div>
+          </div>
         ))}
 
         {/* External links */}
