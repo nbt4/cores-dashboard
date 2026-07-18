@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"mime"
 	"net/http"
 	"os"
 	"os/signal"
@@ -185,13 +186,22 @@ func main() {
 			http.ServeFile(w, r, volPath)
 			return
 		}
-		// Fallback: embedded in dist/logos/
+		// Fallback: embedded in dist/logos/. Serve from the embedded filesystem;
+		// the runtime container does not contain a physical dist/ directory.
 		fallbackPath := "dist/logos/" + base
 		if !strings.HasPrefix(filepath.Clean(fallbackPath), "dist/logos/") {
 			http.NotFound(w, r)
 			return
 		}
-		http.ServeFile(w, r, fallbackPath)
+		data, err := staticFiles.ReadFile(fallbackPath)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		if contentType := mime.TypeByExtension(filepath.Ext(base)); contentType != "" {
+			w.Header().Set("Content-Type", contentType)
+		}
+		_, _ = w.Write(data)
 	})
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
