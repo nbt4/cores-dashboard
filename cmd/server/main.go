@@ -61,6 +61,7 @@ func main() {
 
 	// API Gateway proxy
 	gatewayProxy := proxy.NewHandler(cfg.RentalCoreURL, cfg.WarehouseCoreURL, cfg.PlannercoreURL)
+	proxyHandler := handlers.NewAdminProxyHandler(cfg)
 
 	// requireAdmin wrapper
 	requireAdmin := func(next http.Handler) http.Handler {
@@ -83,7 +84,7 @@ func main() {
 	// API Gateway proxy routes (admin only, with audit logging)
 	mux.Handle("/api/v1/rental/", audit.AuditMiddleware(auditLogger, "rental")(requireAdmin(gatewayProxy.RentalProxy())))
 	mux.Handle("/api/v1/warehouse/", audit.AuditMiddleware(auditLogger, "warehouse")(requireAdmin(gatewayProxy.WarehouseProxy())))
-	mux.Handle("/api/v1/planner/", audit.AuditMiddleware(auditLogger, "planner")(requireAdmin(gatewayProxy.PlannerProxy())))
+	mux.Handle("/api/v1/planner/", audit.AuditMiddleware(auditLogger, "planner")(requireAdmin(http.HandlerFunc(proxyHandler.ProxyPlanner))))
 
 	// Health endpoint (before auth middleware)
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +108,6 @@ func main() {
 
 	authHandler := handlers.NewAuthHandler(cfg, db, microsoftService)
 	analyticsHandler := handlers.NewAnalyticsHandler(cfg)
-	proxyHandler := handlers.NewAdminProxyHandler(cfg)
 	brandingHandler := handlers.NewBrandingHandler(db)
 	microsoftHandler := handlers.NewMicrosoftHandler(microsoftService)
 	usersHandler := handlers.NewUsersHandler(db, microsoftService)
