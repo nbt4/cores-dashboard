@@ -23,6 +23,7 @@ import (
 	"coresdashboard/internal/database"
 	"coresdashboard/internal/handlers"
 	"coresdashboard/internal/metrics"
+	"coresdashboard/internal/microsoft"
 	"coresdashboard/internal/middleware"
 	"coresdashboard/internal/proxy"
 
@@ -41,6 +42,13 @@ func main() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("DB connect failed")
 	}
+	if err := microsoft.EnsureSchema(db); err != nil {
+		log.Fatal().Err(err).Msg("Microsoft identity schema migration failed")
+	}
+	microsoftService := microsoft.NewService(db)
+	syncCtx, cancelMicrosoftSync := context.WithCancel(context.Background())
+	defer cancelMicrosoftSync()
+	microsoftService.Start(syncCtx)
 
 	// Set initial DB connection gauge
 	sqlDB, err := db.DB()
@@ -53,6 +61,7 @@ func main() {
 
 	// API Gateway proxy
 	gatewayProxy := proxy.NewHandler(cfg.RentalCoreURL, cfg.WarehouseCoreURL, cfg.PlannercoreURL)
+	proxyHandler := handlers.NewAdminProxyHandler(cfg)
 
 	// requireAdmin wrapper
 	requireAdmin := func(next http.Handler) http.Handler {
@@ -75,7 +84,7 @@ func main() {
 	// API Gateway proxy routes (admin only, with audit logging)
 	mux.Handle("/api/v1/rental/", audit.AuditMiddleware(auditLogger, "rental")(requireAdmin(gatewayProxy.RentalProxy())))
 	mux.Handle("/api/v1/warehouse/", audit.AuditMiddleware(auditLogger, "warehouse")(requireAdmin(gatewayProxy.WarehouseProxy())))
-	mux.Handle("/api/v1/planner/", audit.AuditMiddleware(auditLogger, "planner")(requireAdmin(gatewayProxy.PlannerProxy())))
+	mux.Handle("/api/v1/planner/", audit.AuditMiddleware(auditLogger, "planner")(requireAdmin(http.HandlerFunc(proxyHandler.ProxyPlanner))))
 
 	// Health endpoint (before auth middleware)
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -86,21 +95,22 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
 				"service": "cores-dashboard",
-				"version": "2.1.0",
+				"version": "1.14.13",
 			})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "ok",
 			"service": "cores-dashboard",
-			"version": "2.1.0",
+			"version": "1.14.13",
 		})
 	})
 
-	authHandler := handlers.NewAuthHandler(cfg, db)
+	authHandler := handlers.NewAuthHandler(cfg, db, microsoftService)
 	analyticsHandler := handlers.NewAnalyticsHandler(cfg)
-	proxyHandler := handlers.NewAdminProxyHandler(cfg)
 	brandingHandler := handlers.NewBrandingHandler(db)
+	microsoftHandler := handlers.NewMicrosoftHandler(microsoftService)
+	usersHandler := handlers.NewUsersHandler(db, microsoftService)
 
 	mux.HandleFunc("GET /api/v1/config", handlers.ConfigHandler(cfg, db))
 	mux.HandleFunc("GET /api/v1/branding", func(w http.ResponseWriter, r *http.Request) {
@@ -110,6 +120,9 @@ func main() {
 	})
 	mux.HandleFunc("POST /api/v1/auth/login", authHandler.Login)
 	mux.HandleFunc("POST /api/v1/auth/logout", authHandler.Logout)
+	mux.HandleFunc("GET /api/v1/auth/methods", authHandler.Methods)
+	mux.HandleFunc("GET /api/v1/auth/microsoft/start", authHandler.MicrosoftStart)
+	mux.HandleFunc("GET /api/v1/auth/microsoft/callback", authHandler.MicrosoftCallback)
 
 	protected := middleware.RequireAuth(cfg, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
@@ -133,6 +146,24 @@ func main() {
 			brandingHandler.UploadLogo(w, r)
 		case r.Method == http.MethodDelete && r.URL.Path == "/api/v1/admin/branding/logo":
 			brandingHandler.DeleteLogo(w, r)
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/admin/microsoft/settings":
+			microsoftHandler.GetSettings(w, r)
+		case r.Method == http.MethodPut && r.URL.Path == "/api/v1/admin/microsoft/settings":
+			microsoftHandler.UpdateSettings(w, r)
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/admin/microsoft/test":
+			microsoftHandler.TestConnection(w, r)
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/admin/microsoft/sync":
+			microsoftHandler.SyncUsers(w, r)
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/admin/users":
+			usersHandler.List(w, r)
+		case r.Method == http.MethodPost && r.URL.Path == "/api/v1/admin/users":
+			usersHandler.Create(w, r)
+		case r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/api/v1/admin/users/") && strings.HasSuffix(strings.TrimRight(r.URL.Path, "/"), "/access"):
+			usersHandler.UpdateAccess(w, r)
+		case r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/api/v1/admin/users/"):
+			usersHandler.Update(w, r)
+		case r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/api/v1/admin/users/"):
+			usersHandler.Delete(w, r)
 		default:
 			switch {
 			case strings.HasPrefix(r.URL.Path, "/api/v1/proxy/rental"):
@@ -246,6 +277,7 @@ func main() {
 	}()
 
 	<-ctx.Done()
+	cancelMicrosoftSync()
 	log.Info().Msg("shutting down...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
