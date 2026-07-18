@@ -133,4 +133,4 @@ Browser ────► cores-dashboard (:8080)
 
 ---
 
-[📦 Monorepo auf GitHub](https://github.com/nbt4/cores) | `nobentie/cores-dashboard:latest`
+[Quellcode](https://github.com/nbt4/cores-dashboard) | [Monorepo](https://github.com/nbt4/cores) | `nobentie/cores-dashboard:latest`
