@@ -236,6 +236,12 @@ func main() {
 	})
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/sw.js" {
+			w.Header().Set("Cache-Control", "no-cache")
+		}
+		if r.URL.Path == "/manifest.webmanifest" {
+			w.Header().Set("Content-Type", "application/manifest+json")
+		}
 		if r.URL.Path != "/" {
 			f, err := distFS.Open(r.URL.Path[1:])
 			if err == nil {

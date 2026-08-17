@@ -143,12 +143,21 @@ export function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
 
+  useEffect(() => {
+    document.body.classList.toggle('modal-open', drawerOpen);
+    return () => document.body.classList.remove('modal-open');
+  }, [drawerOpen]);
+
+  const mobileIsActive = (path: string) => path === '/'
+    ? location.pathname === '/'
+    : location.pathname.startsWith(path);
+
   return (
     <div className="min-h-screen bg-dark flex">
 
       {/* ── MOBILE top bar ─────────────────────────────────── */}
-      <header className="md:hidden fixed top-0 left-0 right-0 z-30 h-14 flex items-center px-4 gap-3 bg-dark-100 border-b border-white/5">
-        <button onClick={() => setDrawerOpen(true)}
+      <header className="mobile-app-header md:hidden fixed top-0 left-0 right-0 z-30 h-14 flex items-center px-4 gap-3 bg-dark-100 border-b border-white/5">
+        <button onClick={() => setDrawerOpen(true)} aria-label="Navigation öffnen" aria-expanded={drawerOpen}
           className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-300 hover:bg-white/5">
           <Menu className="w-5 h-5" />
         </button>
@@ -164,7 +173,7 @@ export function Layout({ children }: { children: ReactNode }) {
       {drawerOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="absolute inset-0 bg-black/60" onClick={() => setDrawerOpen(false)} />
-          <aside className="relative z-50 w-64 h-full flex flex-col bg-dark-100 border-r border-white/5">
+          <aside className="mobile-app-drawer relative z-50 w-64 h-full flex flex-col bg-dark-100 border-r border-white/5" aria-label="Hauptnavigation">
             <button onClick={() => setDrawerOpen(false)}
               className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:bg-white/5">
               <X className="w-4 h-4" />
@@ -190,12 +199,31 @@ export function Layout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* ── Main content ───────────────────────────────────── */}
-      <main className={`flex-1 min-w-0 pt-14 md:pt-0 transition-all duration-200
+      <main className={`mobile-app-main flex-1 min-w-0 pt-14 md:pt-0 transition-all duration-200
         ${desktopExpanded ? 'md:ml-56' : 'md:ml-14'}`}>
-        <div className="p-4 md:p-6 max-w-7xl mx-auto">
+        <div className="mobile-app-content p-4 md:p-6 max-w-7xl mx-auto">
           {children}
         </div>
       </main>
+
+      <nav className="mobile-app-tabbar md:hidden" aria-label="Schnellnavigation">
+        <Link to="/" className={`mobile-app-tab ${mobileIsActive('/') ? 'is-active' : ''}`}>
+          <Home className="w-5 h-5" />
+          <span>Start</span>
+        </Link>
+        <Link to="/admin/users" className={`mobile-app-tab ${mobileIsActive('/admin/users') ? 'is-active' : ''}`}>
+          <Users className="w-5 h-5" />
+          <span>Benutzer</span>
+        </Link>
+        <Link to="/profile/security" className={`mobile-app-tab ${mobileIsActive('/profile/security') ? 'is-active' : ''}`}>
+          <Shield className="w-5 h-5" />
+          <span>Sicherheit</span>
+        </Link>
+        <button type="button" onClick={() => setDrawerOpen(true)} className={`mobile-app-tab ${drawerOpen ? 'is-active' : ''}`}>
+          <Menu className="w-5 h-5" />
+          <span>Mehr</span>
+        </button>
+      </nav>
     </div>
   );
 }

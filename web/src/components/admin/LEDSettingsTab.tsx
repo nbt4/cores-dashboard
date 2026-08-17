@@ -502,7 +502,7 @@ export function LEDSettingsTab() {
         {/* Pattern Selection */}
         <div>
           <label className="block text-sm font-semibold text-gray-400 mb-3">Muster</label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {['solid', 'breathe', 'blink'].map(pattern => (
               <button
                 key={pattern}

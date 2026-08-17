@@ -99,7 +99,7 @@ function ContactForm({
 
       {error && <p className="text-sm text-red-400">{error}</p>}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="col-span-2">
           <label className={labelCls}>Unternehmen</label>
           <input className={inputCls} value={form.companyname ?? ''} onChange={f('companyname')} placeholder="Firma GmbH" />

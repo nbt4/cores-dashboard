@@ -61,7 +61,7 @@ function ServiceItemForm({ initial, onSave, onCancel }: {
         <label className={labelCls}>Name *</label>
         <input className={inputCls} value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="z.B. Fahrtkosten, Personal (Techniker)" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className={labelCls}>Standardpreis (€)</label>
           <input className={inputCls} type="number" min="0" step="0.01" value={form.default_price || ''} onChange={e => setForm(p => ({ ...p, default_price: parseFloat(e.target.value) || 0 }))} placeholder="0.00" />

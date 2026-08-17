@@ -154,7 +154,7 @@ export function RentalFieldsTab() {
       {editing !== null && (
         <div className="rounded-xl p-4 space-y-4" style={{ background: 'var(--surface-3)', border: '1px solid var(--border-subtle)' }}>
           <h3 className="text-sm font-semibold text-white">{editing === 'new' ? 'Neues Feld' : 'Feld bearbeiten'}</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-gray-400 mb-1">Name *</label>
               <input
