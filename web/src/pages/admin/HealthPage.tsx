@@ -13,6 +13,7 @@ interface AggregatedHealth {
   rentalcore: ServiceHealth;
   warehousecore: ServiceHealth;
   plannercore: ServiceHealth;
+  procurementcore: ServiceHealth;
   database: ServiceHealth;
   timestamp: string;
 }
@@ -22,6 +23,7 @@ const SERVICE_LABELS: Record<string, string> = {
   rentalcore: 'RentalCore',
   warehousecore: 'WarehouseCore',
   plannercore: 'PlannerCore',
+  procurementcore: 'ProcurementCore',
   database: 'Datenbank',
 };
 
@@ -30,6 +32,7 @@ const SERVICE_ICONS: Record<string, React.ElementType> = {
   rentalcore: Server,
   warehousecore: Server,
   plannercore: Server,
+  procurementcore: Server,
   database: Database,
 };
 

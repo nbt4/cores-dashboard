@@ -3,7 +3,7 @@ import { brandingApi } from '../../lib/api';
 import type { BrandingConfig } from '../../lib/api';
 import { Upload, Trash2, Palette, Save, Building2 } from 'lucide-react';
 
-const SERVICES = ['cores', 'rental', 'warehouse', 'planner'] as const;
+const SERVICES = ['cores', 'rental', 'warehouse', 'planner', 'procurement'] as const;
 const POSITIONS = ['sidebar', 'login', 'favicon'] as const;
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -11,6 +11,7 @@ const SERVICE_LABELS: Record<string, string> = {
   rental: 'RentalCore',
   warehouse: 'WarehouseCore',
   planner: 'PlannerCore',
+  procurement: 'ProcurementCore',
 };
 
 const POSITION_LABELS: Record<string, string> = {

@@ -1,7 +1,7 @@
 // File: cores-dashboard/web/src/pages/Dashboard.tsx
 import { toast } from '../lib/toast';
 import { useEffect, useState } from 'react';
-import { ExternalLink, Briefcase, Package, TrendingUp, Wrench, AlertTriangle, BarChart2, Kanban } from 'lucide-react';
+import { ExternalLink, Briefcase, Package, TrendingUp, Wrench, AlertTriangle, BarChart2, Kanban, ShoppingBasket } from 'lucide-react';
 import { api } from '../lib/api';
 import { useAppConfig } from '../hooks/useAppConfig';
 
@@ -93,6 +93,20 @@ export function Dashboard() {
           <div className="absolute right-4 bottom-4 opacity-10">
             <Kanban className="w-20 h-20 text-white" />
           </div>
+        </a>
+
+        <a href={config?.procurementUrl ?? '/procurement/'}
+          className="group relative overflow-hidden rounded-2xl p-6 flex flex-col justify-between min-h-40 transition-transform hover:scale-[1.01]"
+          style={{ background: 'linear-gradient(135deg, #9f1239 0%, #e11d48 55%, #fb7185 100%)' }}>
+          <div>
+            <p className="text-white/70 text-xs font-semibold tracking-wider uppercase">Einkauf & Beschaffung</p>
+            <h2 className="text-white text-2xl font-black mt-1">ProcurementCore</h2>
+          </div>
+          <div className="flex items-center gap-2 text-white/80 text-sm font-medium mt-4">
+            <span>Öffnen</span>
+            <ExternalLink className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </div>
+          <div className="absolute right-4 bottom-4 opacity-10"><ShoppingBasket className="w-20 h-20 text-white" /></div>
         </a>
       </div>
 

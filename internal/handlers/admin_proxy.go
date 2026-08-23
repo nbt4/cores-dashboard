@@ -69,6 +69,34 @@ func (h *AdminProxyHandler) ProxyPlannerSpa(w http.ResponseWriter, r *http.Reque
 	h.serveSPAProxy(w, r, target)
 }
 
+// ProxyProcurement forwards /api/v1/procurement/* to ProcurementCore's /api/v1/*.
+func (h *AdminProxyHandler) ProxyProcurement(w http.ResponseWriter, r *http.Request) {
+	remaining := strings.TrimPrefix(r.URL.Path, "/api/v1/procurement")
+	cleaned := path.Clean("/" + strings.TrimPrefix(remaining, "/"))
+	if strings.Contains(cleaned, "..") {
+		http.Error(w, `{"error":"invalid path"}`, http.StatusBadRequest)
+		return
+	}
+	h.proxy(w, r, h.cfg.ProcurementCoreURL+"/api/v1"+cleaned)
+}
+
+// ProxyProcurementSpa forwards /procurement/* to ProcurementCore's frontend.
+func (h *AdminProxyHandler) ProxyProcurementSpa(w http.ResponseWriter, r *http.Request) {
+	p := strings.TrimPrefix(r.URL.Path, "/procurement")
+	if p == "" {
+		p = "/"
+	}
+	if cleaned := path.Clean(p); cleaned != p && p != "/" {
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+	target := h.cfg.ProcurementCoreURL + p
+	if r.URL.RawQuery != "" {
+		target += "?" + r.URL.RawQuery
+	}
+	h.serveSPAProxy(w, r, target)
+}
+
 func (h *AdminProxyHandler) serveSPAProxy(w http.ResponseWriter, r *http.Request, targetURL string) {
 	req, err := http.NewRequest(r.Method, targetURL, r.Body)
 	if err != nil {

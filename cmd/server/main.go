@@ -26,6 +26,7 @@ import (
 	"coresdashboard/internal/microsoft"
 	"coresdashboard/internal/middleware"
 	"coresdashboard/internal/proxy"
+	commonbranding "github.com/nbt4/cores-common/pkg/branding"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -41,6 +42,9 @@ func main() {
 	db, err := database.Connect(cfg)
 	if err != nil {
 		log.Fatal().Err(err).Msg("DB connect failed")
+	}
+	if err := db.AutoMigrate(&commonbranding.Record{}); err != nil {
+		log.Fatal().Err(err).Msg("branding schema migration failed")
 	}
 	if err := microsoft.EnsureSchema(db); err != nil {
 		log.Fatal().Err(err).Msg("Microsoft identity schema migration failed")
@@ -85,6 +89,7 @@ func main() {
 	mux.Handle("/api/v1/rental/", audit.AuditMiddleware(auditLogger, "rental")(requireAdmin(gatewayProxy.RentalProxy())))
 	mux.Handle("/api/v1/warehouse/", audit.AuditMiddleware(auditLogger, "warehouse")(requireAdmin(gatewayProxy.WarehouseProxy())))
 	mux.Handle("/api/v1/planner/", audit.AuditMiddleware(auditLogger, "planner")(requireAdmin(http.HandlerFunc(proxyHandler.ProxyPlanner))))
+	mux.Handle("/api/v1/procurement/", audit.AuditMiddleware(auditLogger, "procurement")(middleware.RequireAuth(cfg, http.HandlerFunc(proxyHandler.ProxyProcurement))))
 
 	// Health endpoint (before auth middleware)
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -95,14 +100,14 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
 				"service": "cores-dashboard",
-				"version": "1.14.13",
+				"version": "1.14.15",
 			})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "ok",
 			"service": "cores-dashboard",
-			"version": "1.14.13",
+			"version": "1.14.15",
 		})
 	})
 
@@ -186,6 +191,10 @@ func main() {
 	mux.HandleFunc("/planner/", proxyHandler.ProxyPlannerSpa)
 	mux.HandleFunc("/planner", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/planner/", http.StatusMovedPermanently)
+	})
+	mux.HandleFunc("/procurement/", proxyHandler.ProxyProcurementSpa)
+	mux.HandleFunc("/procurement", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/procurement/", http.StatusMovedPermanently)
 	})
 
 	distFS, err := fs.Sub(staticFiles, "dist")

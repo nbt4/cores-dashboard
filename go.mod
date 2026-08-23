@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/nbt4/cores-common v0.0.0-20260615221321-b29c7ed5ed26
+	github.com/nbt4/cores-common v1.0.0
 	github.com/prometheus/client_golang v1.23.2
 	github.com/rs/zerolog v1.35.1
 	golang.org/x/crypto v0.50.0

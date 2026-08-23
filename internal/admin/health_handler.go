@@ -46,12 +46,13 @@ type HealthResponse struct {
 
 // AggregatedHealth is the response for GET /api/v1/admin/health.
 type AggregatedHealth struct {
-	CoresDashboard   ServiceHealth `json:"cores-dashboard"`
-	RentalCore       ServiceHealth `json:"rentalcore"`
-	WarehouseCore    ServiceHealth `json:"warehousecore"`
-	PlannerCore      ServiceHealth `json:"plannercore"`
-	Database         ServiceHealth `json:"database"`
-	Timestamp        string        `json:"timestamp"`
+	CoresDashboard  ServiceHealth `json:"cores-dashboard"`
+	RentalCore      ServiceHealth `json:"rentalcore"`
+	WarehouseCore   ServiceHealth `json:"warehousecore"`
+	PlannerCore     ServiceHealth `json:"plannercore"`
+	ProcurementCore ServiceHealth `json:"procurementcore"`
+	Database        ServiceHealth `json:"database"`
+	Timestamp       string        `json:"timestamp"`
 }
 
 // ServiceHealth represents the health status of a single service.
@@ -62,7 +63,7 @@ type ServiceHealth struct {
 }
 
 // VERSION is the cores-dashboard version string.
-const VERSION = "2.1.0"
+const VERSION = "1.14.15"
 
 // ServeHTTP handles GET /api/v1/admin/health (admin-only).
 func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -95,6 +96,7 @@ func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		{"rentalcore", h.cfg.RentalCoreURL + "/health"},
 		{"warehousecore", h.cfg.WarehouseCoreURL + "/health"},
 		{"plannercore", h.cfg.PlannercoreURL + "/health"},
+		{"procurementcore", h.cfg.ProcurementCoreURL + "/health"},
 	}
 
 	// Check all services concurrently
@@ -114,6 +116,8 @@ func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				agg.WarehouseCore = sh
 			case "plannercore":
 				agg.PlannerCore = sh
+			case "procurementcore":
+				agg.ProcurementCore = sh
 			}
 			mu.Unlock()
 		}(svc)

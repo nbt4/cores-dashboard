@@ -12,6 +12,7 @@ interface AppConfig {
   rentalUrl: string;
   warehouseUrl: string;
   plannerUrl: string;
+  procurementUrl: string;
   branding?: BrandingInfo;
 }
 

@@ -13,9 +13,10 @@ import (
 func ConfigHandler(cfg *config.Config, db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		payload := map[string]interface{}{
-			"rentalUrl":    cfg.RentalPublicURL,
-			"warehouseUrl": cfg.WarehousePublicURL,
-			"plannerUrl":   cfg.PlannercorePublicURL,
+			"rentalUrl":      cfg.RentalPublicURL,
+			"warehouseUrl":   cfg.WarehousePublicURL,
+			"plannerUrl":     cfg.PlannercorePublicURL,
+			"procurementUrl": cfg.ProcurementPublicURL,
 		}
 
 		// Include branding basics if available

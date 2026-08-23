@@ -83,6 +83,10 @@ func (h *BrandingHandler) GetBrandingPublic(svc string) PublicBranding {
 		pb.SidebarLogo = bust(derefStr(cfg.LogoPlannerSidebar))
 		pb.LoginLogo = bust(derefStr(cfg.LogoPlannerLogin))
 		pb.FaviconPath = bust(derefStr(cfg.FaviconPlanner))
+	case "procurement":
+		pb.SidebarLogo = bust(derefStr(cfg.LogoProcurementSidebar))
+		pb.LoginLogo = bust(derefStr(cfg.LogoProcurementLogin))
+		pb.FaviconPath = bust(derefStr(cfg.FaviconProcurement))
 	}
 	// Fallback: legacy global favicon
 	if pb.FaviconPath == "" {
@@ -293,6 +297,10 @@ func (h *BrandingHandler) DeleteLogo(w http.ResponseWriter, r *http.Request) {
 		currentPath = cfg.LogoPlannerSidebar
 	case "logo_planner_login":
 		currentPath = cfg.LogoPlannerLogin
+	case "logo_procurement_sidebar":
+		currentPath = cfg.LogoProcurementSidebar
+	case "logo_procurement_login":
+		currentPath = cfg.LogoProcurementLogin
 	case "favicon_cores":
 		currentPath = cfg.FaviconCores
 	case "favicon_rental":
@@ -301,6 +309,8 @@ func (h *BrandingHandler) DeleteLogo(w http.ResponseWriter, r *http.Request) {
 		currentPath = cfg.FaviconWarehouse
 	case "favicon_planner":
 		currentPath = cfg.FaviconPlanner
+	case "favicon_procurement":
+		currentPath = cfg.FaviconProcurement
 	case "favicon_path":
 		currentPath = cfg.FaviconPath
 	}
@@ -345,6 +355,10 @@ func (h *BrandingHandler) ServeLogo(w http.ResponseWriter, r *http.Request, svc 
 		webPath = cfg.LogoPlannerSidebar
 	case svc == "planner" && pos == "login":
 		webPath = cfg.LogoPlannerLogin
+	case svc == "procurement" && pos == "sidebar":
+		webPath = cfg.LogoProcurementSidebar
+	case svc == "procurement" && pos == "login":
+		webPath = cfg.LogoProcurementLogin
 	case pos == "favicon":
 		webPath = cfg.FaviconPath
 	default:
@@ -500,6 +514,10 @@ func (h *BrandingHandler) setColumn(cfg *models.BrandingConfig, column string, v
 		cfg.LogoPlannerSidebar = val
 	case "logo_planner_login":
 		cfg.LogoPlannerLogin = val
+	case "logo_procurement_sidebar":
+		cfg.LogoProcurementSidebar = val
+	case "logo_procurement_login":
+		cfg.LogoProcurementLogin = val
 	case "favicon_cores":
 		cfg.FaviconCores = val
 	case "favicon_rental":
@@ -508,6 +526,8 @@ func (h *BrandingHandler) setColumn(cfg *models.BrandingConfig, column string, v
 		cfg.FaviconWarehouse = val
 	case "favicon_planner":
 		cfg.FaviconPlanner = val
+	case "favicon_procurement":
+		cfg.FaviconProcurement = val
 	case "favicon_path":
 		cfg.FaviconPath = val
 	}
@@ -515,7 +535,7 @@ func (h *BrandingHandler) setColumn(cfg *models.BrandingConfig, column string, v
 
 func validService(s string) bool {
 	switch s {
-	case "cores", "rental", "warehouse", "planner":
+	case "cores", "rental", "warehouse", "planner", "procurement":
 		return true
 	}
 	return false

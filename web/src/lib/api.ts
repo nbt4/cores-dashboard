@@ -225,6 +225,8 @@ export interface BrandingConfig {
   logoWarehouseLogin: string | null;
   logoPlannerSidebar: string | null;
   logoPlannerLogin: string | null;
+  logoProcurementSidebar: string | null;
+  logoProcurementLogin: string | null;
   faviconPath: string | null;
   logoSizeSidebar: number;
   logoSizeLogin: number;
