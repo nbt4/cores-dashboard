@@ -38,7 +38,7 @@ func Load() *Config {
 		RentalPublicURL:      commonconfig.GetEnv("RENTAL_PUBLIC_URL", ""),
 		WarehousePublicURL:   commonconfig.GetEnv("WAREHOUSE_PUBLIC_URL", ""),
 		PlannercorePublicURL: commonconfig.GetEnv("PLANNERCORE_PUBLIC_URL", "/planner/"),
-		ProcurementPublicURL: commonconfig.GetEnv("PROCUREMENTCORE_PUBLIC_URL", "/procurement/"),
+		ProcurementPublicURL: commonconfig.GetEnv("PROCUREMENTCORE_PUBLIC_URL", "https://procurement.tsunami-events.de"),
 		CookieDomain:         commonconfig.GetEnv("COOKIE_DOMAIN", ""),
 		DBHost:               commonconfig.GetEnv("DB_HOST", "localhost"),
 		DBPort:               commonconfig.GetEnv("DB_PORT", "5432"),

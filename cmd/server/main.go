@@ -89,7 +89,6 @@ func main() {
 	mux.Handle("/api/v1/rental/", audit.AuditMiddleware(auditLogger, "rental")(requireAdmin(gatewayProxy.RentalProxy())))
 	mux.Handle("/api/v1/warehouse/", audit.AuditMiddleware(auditLogger, "warehouse")(requireAdmin(gatewayProxy.WarehouseProxy())))
 	mux.Handle("/api/v1/planner/", audit.AuditMiddleware(auditLogger, "planner")(requireAdmin(http.HandlerFunc(proxyHandler.ProxyPlanner))))
-	mux.Handle("/api/v1/procurement/", audit.AuditMiddleware(auditLogger, "procurement")(middleware.RequireAuth(cfg, http.HandlerFunc(proxyHandler.ProxyProcurement))))
 
 	// Health endpoint (before auth middleware)
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -100,14 +99,14 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
 				"service": "cores-dashboard",
-				"version": "1.14.15",
+				"version": "1.14.16",
 			})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "ok",
 			"service": "cores-dashboard",
-			"version": "1.14.15",
+			"version": "1.14.16",
 		})
 	})
 
@@ -192,10 +191,13 @@ func main() {
 	mux.HandleFunc("/planner", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/planner/", http.StatusMovedPermanently)
 	})
-	mux.HandleFunc("/procurement/", proxyHandler.ProxyProcurementSpa)
-	mux.HandleFunc("/procurement", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/procurement/", http.StatusMovedPermanently)
-	})
+
+	// ProcurementCore is an independent service and must not be exposed below
+	// the dashboard host. Keep explicit guards ahead of the SPA fallback.
+	mux.HandleFunc("/procurement", http.NotFound)
+	mux.HandleFunc("/procurement/", http.NotFound)
+	mux.HandleFunc("/api/v1/procurement", http.NotFound)
+	mux.HandleFunc("/api/v1/procurement/", http.NotFound)
 
 	distFS, err := fs.Sub(staticFiles, "dist")
 	if err != nil {

@@ -95,7 +95,7 @@ export function Dashboard() {
           </div>
         </a>
 
-        <a href={config?.procurementUrl ?? '/procurement/'}
+        <a href={config?.procurementUrl ?? 'https://procurement.tsunami-events.de'}
           className="group relative overflow-hidden rounded-2xl p-6 flex flex-col justify-between min-h-40 transition-transform hover:scale-[1.01]"
           style={{ background: 'linear-gradient(135deg, #9f1239 0%, #e11d48 55%, #fb7185 100%)' }}>
           <div>

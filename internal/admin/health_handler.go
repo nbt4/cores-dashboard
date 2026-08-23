@@ -63,7 +63,7 @@ type ServiceHealth struct {
 }
 
 // VERSION is the cores-dashboard version string.
-const VERSION = "1.14.15"
+const VERSION = "1.14.16"
 
 // ServeHTTP handles GET /api/v1/admin/health (admin-only).
 func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
