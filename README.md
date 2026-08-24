@@ -16,6 +16,7 @@
 - **Config API** — Öffentlicher Endpoint liefert alle Cross-Links und Branding-Daten für clientseitige Integration
 - **Statisches Embedding** — Frontend (React/Vite) und Backend (Go) in einem Binary via `embed`. Keine separaten Assets nötig
 - **Installierbare Mobile-App (PWA)** — Eigenes Homescreen-Icon, Standalone-Modus, Safe-Area-Unterstützung und touchoptimierte Navigation für iPhone, iPad und Android
+- **Einheitliche App-Shell** — Produktlogo nur in der ein-/ausklappbaren Sidebar (176 × 48 px bzw. 40 × 40 px), logofreie Header und ein reines Produkt-Favicon im Browser-Tab
 
 ### Branding
 

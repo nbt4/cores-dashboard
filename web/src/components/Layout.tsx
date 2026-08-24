@@ -53,11 +53,11 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="flex items-center gap-3 px-3 py-4 border-b border-white/5 flex-shrink-0">
+      <div className="h-20 flex items-center justify-center px-2 border-b border-white/5 flex-shrink-0 overflow-hidden">
         <img
           src={expanded ? branding.assets.horizontalOnDark : branding.assets.markOnDark}
           alt={branding.productName}
-          className={expanded ? 'h-12 max-w-full flex-shrink-0 object-contain' : 'h-8 w-8 flex-shrink-0 object-contain'}
+          className={expanded ? 'h-12 w-44 flex-shrink-0 object-contain' : 'h-10 w-10 flex-shrink-0 object-contain'}
           style={{ filter: 'drop-shadow(0 0 14px rgba(var(--accent-red-rgb), 0.3))' }}
         />
       </div>
@@ -144,7 +144,6 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
 export function Layout({ children }: { children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [desktopExpanded, setDesktopExpanded] = useState(true);
-  const layoutBranding = useBranding();
 
   // Close drawer on route change
   const location = useLocation();
@@ -168,12 +167,6 @@ export function Layout({ children }: { children: ReactNode }) {
           className="w-9 h-9 flex items-center justify-center rounded-lg text-gray-300 hover:bg-white/5">
           <Menu className="w-5 h-5" />
         </button>
-        <img
-          src={layoutBranding.assets.horizontalOnDark}
-          alt={layoutBranding.productName}
-          className="h-9 max-w-44 object-contain"
-          style={{ filter: 'drop-shadow(0 0 12px rgba(var(--accent-red-rgb), 0.25))' }}
-        />
       </header>
 
       {/* ── MOBILE drawer overlay ───────────────────────────── */}
@@ -193,12 +186,14 @@ export function Layout({ children }: { children: ReactNode }) {
       {/* ── DESKTOP sidebar ────────────────────────────────── */}
       <aside
         className={`hidden md:flex flex-col fixed top-0 left-0 h-full z-20 transition-all duration-200 bg-dark-100 border-r border-white/5
-          ${desktopExpanded ? 'w-56' : 'w-14'}`}
+          ${desktopExpanded ? 'w-56' : 'w-20'}`}
       >
         {/* Collapse toggle */}
         <button
           onClick={() => setDesktopExpanded(e => !e)}
-          className="absolute -right-3 top-16 w-6 h-6 rounded-full bg-dark-300 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white z-10"
+          className="absolute -right-3 top-[68px] w-6 h-6 rounded-full bg-dark-300 border border-white/10 flex items-center justify-center text-gray-400 hover:text-white z-10"
+          aria-label={desktopExpanded ? 'Sidebar zuklappen' : 'Sidebar aufklappen'}
+          aria-expanded={desktopExpanded}
         >
           <ChevronDown className={`w-3 h-3 transition-transform ${desktopExpanded ? 'rotate-90' : '-rotate-90'}`} />
         </button>
@@ -207,7 +202,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* ── Main content ───────────────────────────────────── */}
       <main className={`mobile-app-main flex-1 min-w-0 pt-14 md:pt-0 transition-all duration-200
-        ${desktopExpanded ? 'md:ml-56' : 'md:ml-14'}`}>
+        ${desktopExpanded ? 'md:ml-56' : 'md:ml-20'}`}>
         <div className="mobile-app-content p-4 md:p-6 max-w-7xl mx-auto">
           {children}
         </div>

@@ -3,6 +3,13 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
 
+document.addEventListener('wheel', (event) => {
+  const target = event.target
+  if (target instanceof HTMLInputElement && target.type === 'number' && document.activeElement === target) {
+    target.blur()
+  }
+}, { capture: true, passive: true })
+
 const standaloneQuery = window.matchMedia('(display-mode: standalone)')
 const syncDisplayMode = () => {
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }

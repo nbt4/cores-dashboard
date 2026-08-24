@@ -20,7 +20,7 @@ const SERVICE_LABELS: Record<ServiceId, string> = {
 const PRODUCT_ASSETS: Array<{ position: AssetPosition; label: string; help: string }> = [
   { position: 'mark-on-dark', label: 'Symbol · dunkel', help: 'Eingeklappte Sidebar auf dunklem Grund' },
   { position: 'mark-on-light', label: 'Symbol · hell', help: 'Kleine Darstellung auf hellem Grund' },
-  { position: 'horizontal-on-dark', label: 'Horizontal · dunkel', help: 'Erweiterte Sidebar und App-Header' },
+  { position: 'horizontal-on-dark', label: 'Horizontal · dunkel', help: 'Geöffnete Sidebar auf dunklem Grund' },
   { position: 'horizontal-on-light', label: 'Horizontal · hell', help: 'Helle Flächen und Dokumentation' },
   { position: 'stacked-on-dark', label: 'Gestapelt · dunkel', help: 'Login und Splashscreen' },
   { position: 'stacked-on-light', label: 'Gestapelt · hell', help: 'Präsentationen und helle Landingpages' },
@@ -162,7 +162,7 @@ export function BrandingTab() {
       </section>
 
       <section className="rounded-xl p-5" style={{ background: 'rgba(var(--accent-blue-rgb), .06)', border: '1px solid rgba(var(--accent-blue-rgb), .2)' }}>
-        <div className="flex gap-3"><Info className="mt-0.5 h-5 w-5 flex-none" style={{ color: 'var(--accent-blue)' }} /><div className="text-sm" style={{ color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>Einsatzregel:</strong> Symbol für Favicons und kompakte Navigation, horizontales Logo für Sidebars und Header, gestapeltes Logo für Login und Splash. „Dunkel“ bezeichnet den Hintergrund, nicht die Logofarbe.</div></div>
+        <div className="flex gap-3"><Info className="mt-0.5 h-5 w-5 flex-none" style={{ color: 'var(--accent-blue)' }} /><div className="text-sm" style={{ color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>Einsatzregel:</strong> Symbol für Favicons und eingeklappte Sidebars, horizontales Logo ausschließlich für geöffnete Sidebars, gestapeltes Logo für Login und Splash. App-Header bleiben logofrei. „Dunkel“ bezeichnet den Hintergrund, nicht die Logofarbe.</div></div>
       </section>
     </div>
   );

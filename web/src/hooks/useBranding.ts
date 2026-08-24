@@ -56,6 +56,7 @@ function applyDocumentBranding(branding: BrandingConfig) {
       document.head.appendChild(link);
     }
     link.href = href;
+    if (rel === 'icon') link.type = href.toLowerCase().includes('.png') ? 'image/png' : 'image/svg+xml';
   };
   setLink("link[rel~='icon']", 'icon', branding.assets.favicon || branding.faviconPath);
   setLink("link[rel='apple-touch-icon']", 'apple-touch-icon', branding.assets.appIcon);
