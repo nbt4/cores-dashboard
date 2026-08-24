@@ -110,6 +110,7 @@ func (h *BrandingHandler) UploadLogo(w http.ResponseWriter, r *http.Request) {
 	// ParseMultipartForm's argument is only the in-memory threshold; larger
 	// uploads spill to a temporary file and are not rejected by size.
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		brandingLog.Warn().Err(err).Msg("invalid branding upload multipart data")
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid multipart data"})
 		return
 	}
@@ -124,6 +125,7 @@ func (h *BrandingHandler) UploadLogo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !validService(svc) || !validPosition(pos) {
+		brandingLog.Warn().Str("service", svc).Str("position", pos).Msg("invalid branding upload target")
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid service or position"})
 		return
 	}
@@ -141,6 +143,7 @@ func (h *BrandingHandler) UploadLogo(w http.ResponseWriter, r *http.Request) {
 	}
 	data, ext, err := prepareBrandingAsset(data, header.Filename, pos)
 	if err != nil {
+		brandingLog.Warn().Err(err).Str("service", svc).Str("position", pos).Str("filename", header.Filename).Msg("branding upload rejected")
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
@@ -383,9 +386,6 @@ func prepareBrandingAsset(data []byte, filename, position string) ([]byte, strin
 	if width <= 0 || height <= 0 {
 		return nil, "", fmt.Errorf("image dimensions must be positive")
 	}
-	if err := validateAspectRatio(position, width/height); err != nil {
-		return nil, "", err
-	}
 	return data, ext, nil
 }
 
@@ -426,24 +426,6 @@ func parseSVGLength(value string) (float64, error) {
 		value = strings.TrimSuffix(value, suffix)
 	}
 	return strconv.ParseFloat(value, 64)
-}
-
-func validateAspectRatio(position string, ratio float64) error {
-	switch position {
-	case "mark-on-dark", "mark-on-light", "favicon", "app-icon", "maskable-icon":
-		if ratio < 0.8 || ratio > 1.25 {
-			return fmt.Errorf("%s must be approximately square (aspect ratio 0.8–1.25)", position)
-		}
-	case "horizontal-on-dark", "horizontal-on-light", "sidebar":
-		if ratio < 1.4 || ratio > 6 {
-			return fmt.Errorf("%s must be horizontal (aspect ratio 1.4–6.0)", position)
-		}
-	case "stacked-on-dark", "stacked-on-light", "login":
-		if ratio < 0.7 || ratio > 1.7 {
-			return fmt.Errorf("%s must be a stacked lockup (aspect ratio 0.7–1.7)", position)
-		}
-	}
-	return nil
 }
 
 // ---------------------------------------------------------------------------

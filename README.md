@@ -22,8 +22,9 @@
 Unter **Administration → Branding** werden Unternehmensmarke und alle fünf
 Produktmarken getrennt verwaltet. Verfügbar sind Varianten für helle/dunkle
 Flächen, Navigation, Login, Favicon und installierte PWA. Uploads werden nach
-Dateityp, Inhalt und Seitenverhältnis validiert; SVG-Dateien werden vor dem
-Speichern bereinigt. Öffentliche Clients lesen `/api/v1/branding`.
+Dateityp und Inhalt validiert; empfohlene Seitenverhältnisse sind keine harte
+Upload-Grenze. SVG-Dateien werden vor dem Speichern bereinigt. Öffentliche
+Clients lesen `/api/v1/branding`.
 
 ---
 
@@ -87,6 +88,10 @@ cores-dashboard:
 Beim Containerstart wird das persistente Branding-Volume automatisch dem
 unprivilegierten Anwendungsbenutzer zugeordnet. Dadurch bleiben Logo-Uploads
 auch mit neu angelegten Docker-Volumes beschreibbar.
+
+Der PWA-Service-Worker wird mit einer versionierten URL aktualisiert und ersetzt
+alte Worker sofort. Er hält keinen Runtime-Cache vor, da das Dashboard für seine
+Funktionen ohnehin die Live-APIs benötigt.
 
 ---
 

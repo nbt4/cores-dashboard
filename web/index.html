@@ -16,6 +16,27 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (() => {
+        const localHost = ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
+        if (localHost || !('serviceWorker' in navigator)) return
+
+        let reloading = false
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloading) return
+          reloading = true
+          window.location.reload()
+        })
+
+        navigator.serviceWorker
+          .register('/sw.js?v=3', { scope: '/', updateViaCache: 'none' })
+          .then(async (registration) => {
+            registration.waiting?.postMessage({ type: 'SKIP_WAITING' })
+            await registration.update()
+          })
+          .catch((error) => console.error('Cores service worker upgrade failed:', error))
+      })()
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import axios from 'axios';
 import { Building2, Image, Info, Save, Trash2, Upload } from 'lucide-react';
 import { brandingApi } from '../../lib/api';
 import type { BrandingAssetSet, BrandingConfig } from '../../lib/api';
@@ -101,8 +102,9 @@ export function BrandingTab() {
       await brandingApi.uploadLogo(service, position, file);
       await fetchConfig();
       notify('success', `${SERVICE_LABELS[service]} aktualisiert.`);
-    } catch {
-      notify('error', 'Upload abgelehnt. Bitte Dateityp, Bildinhalt und Seitenverhältnis prüfen.');
+    } catch (error: unknown) {
+      const reason = axios.isAxiosError<{ error?: string }>(error) ? error.response?.data?.error : undefined;
+      notify('error', reason ? `Upload abgelehnt: ${reason}` : 'Upload konnte nicht abgeschlossen werden.');
     } finally {
       setUploading(null);
     }

@@ -2,7 +2,6 @@ import axios from 'axios';
 
 export const api = axios.create({
   baseURL: '/api/v1',
-  headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
 
@@ -271,9 +270,7 @@ export const brandingApi = {
     formData.append('service', service);
     formData.append('position', position);
     formData.append('file', file);
-    return api.post<{ path: string; column: string }>('/admin/branding/logo', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    return api.post<{ path: string; column: string }>('/admin/branding/logo', formData);
   },
   deleteLogo: (service: string, position: string) =>
     api.delete<{ status: string }>('/admin/branding/logo', { params: { service, position } }),

@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestPrepareBrandingAssetValidatesSemanticShape(t *testing.T) {
+func TestPrepareBrandingAssetAcceptsDifferentShapes(t *testing.T) {
 	var square bytes.Buffer
 	if err := png.Encode(&square, image.NewRGBA(image.Rect(0, 0, 128, 128))); err != nil {
 		t.Fatal(err)
@@ -17,8 +17,8 @@ func TestPrepareBrandingAssetValidatesSemanticShape(t *testing.T) {
 	if _, _, err := prepareBrandingAsset(square.Bytes(), "mark.png", "mark-on-dark"); err != nil {
 		t.Fatalf("valid square mark rejected: %v", err)
 	}
-	if _, _, err := prepareBrandingAsset(square.Bytes(), "side.png", "horizontal-on-dark"); err == nil {
-		t.Fatal("square image accepted as horizontal lockup")
+	if _, _, err := prepareBrandingAsset(square.Bytes(), "side.png", "horizontal-on-dark"); err != nil {
+		t.Fatalf("valid square image rejected for horizontal slot: %v", err)
 	}
 
 	wide := image.NewRGBA(image.Rect(0, 0, 400, 100))
