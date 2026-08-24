@@ -5,13 +5,18 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
+	commonbranding "github.com/nbt4/cores-common/pkg/branding"
 	"github.com/rs/zerolog"
 	"gorm.io/gorm"
 
@@ -22,7 +27,8 @@ var brandingLog = zerolog.New(os.Stderr).With().Timestamp().Str("component", "br
 
 const (
 	brandingLogoDir      = "/var/lib/branding/logos"
-	brandingAllowedTypes = "image/png,image/jpeg,image/svg+xml"
+	brandingMaxFileSize  = 2 << 20
+	brandingAllowedTypes = "image/png,image/svg+xml (JPEG only for print assets)"
 )
 
 // BrandingHandler provides CRUD endpoints for the branding_config singleton.
@@ -39,63 +45,9 @@ func NewBrandingHandler(db *gorm.DB) *BrandingHandler {
 	return &BrandingHandler{db: db}
 }
 
-// PublicBranding mirrors the API shape that other services expose at /api/v1/branding.
-type PublicBranding struct {
-	CompanyName     string `json:"companyName"`
-	BrandName       string `json:"brandName"`
-	SidebarLogo     string `json:"sidebarLogo"`
-	LoginLogo       string `json:"loginLogo"`
-	FaviconPath     string `json:"faviconPath"`
-	LogoSizeSidebar int16  `json:"logoSizeSidebar"`
-	LogoSizeLogin   int16  `json:"logoSizeLogin"`
-}
-
 // GetBrandingPublic returns branding scoped to the given service (e.g. "cores").
-func (h *BrandingHandler) GetBrandingPublic(svc string) PublicBranding {
-	cfg := h.getOrCreate()
-	ts := cfg.UpdatedAt.Unix()
-	bust := func(p string) string {
-		if p == "" {
-			return ""
-		}
-		return fmt.Sprintf("%s?v=%d", p, ts)
-	}
-	pb := PublicBranding{
-		CompanyName:     cfg.CompanyName,
-		BrandName:       cfg.BrandName,
-		LogoSizeSidebar: cfg.LogoSizeSidebar,
-		LogoSizeLogin:   cfg.LogoSizeLogin,
-	}
-	switch svc {
-	case "cores":
-		pb.SidebarLogo = bust(derefStr(cfg.LogoCoresSidebar))
-		pb.LoginLogo = bust(derefStr(cfg.LogoCoresLogin))
-		pb.FaviconPath = bust(derefStr(cfg.FaviconCores))
-	case "rental":
-		pb.SidebarLogo = bust(derefStr(cfg.LogoRentalSidebar))
-		pb.LoginLogo = bust(derefStr(cfg.LogoRentalLogin))
-		pb.FaviconPath = bust(derefStr(cfg.FaviconRental))
-	case "warehouse":
-		pb.SidebarLogo = bust(derefStr(cfg.LogoWarehouseSidebar))
-		pb.LoginLogo = bust(derefStr(cfg.LogoWarehouseLogin))
-		pb.FaviconPath = bust(derefStr(cfg.FaviconWarehouse))
-	case "planner":
-		pb.SidebarLogo = bust(derefStr(cfg.LogoPlannerSidebar))
-		pb.LoginLogo = bust(derefStr(cfg.LogoPlannerLogin))
-		pb.FaviconPath = bust(derefStr(cfg.FaviconPlanner))
-	case "procurement":
-		pb.SidebarLogo = bust(derefStr(cfg.LogoProcurementSidebar))
-		pb.LoginLogo = bust(derefStr(cfg.LogoProcurementLogin))
-		pb.FaviconPath = bust(derefStr(cfg.FaviconProcurement))
-	}
-	// Fallback: legacy global favicon
-	if pb.FaviconPath == "" {
-		pb.FaviconPath = bust(derefStr(cfg.FaviconPath))
-	}
-	if pb.CompanyName == "" {
-		pb.CompanyName = "Cores"
-	}
-	return pb
+func (h *BrandingHandler) GetBrandingPublic(svc string) commonbranding.Config {
+	return commonbranding.NewService(h.db, svc).GetConfig()
 }
 
 func derefStr(p *string) string {
@@ -152,12 +104,13 @@ func (h *BrandingHandler) UpdateBranding(w http.ResponseWriter, r *http.Request)
 
 // ---------------------------------------------------------------------------
 // POST /api/v1/admin/branding/logo
-// multipart form: service=cores|rental|warehouse|planner, position=sidebar|login|favicon, file=<image>
+// multipart form: service=<service|company>, position=<semantic position>, file=<image>
 // ---------------------------------------------------------------------------
 
 func (h *BrandingHandler) UploadLogo(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseMultipartForm(32 << 20); err != nil { // FIXED: Unlimited upload — limit to 32MB
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to parse upload"})
+	r.Body = http.MaxBytesReader(w, r.Body, brandingMaxFileSize+(512<<10))
+	if err := r.ParseMultipartForm(brandingMaxFileSize); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "upload exceeds 2 MB or is not valid multipart data"})
 		return
 	}
 
@@ -178,86 +131,64 @@ func (h *BrandingHandler) UploadLogo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-
-	// Validate content type
-	ct := header.Header.Get("Content-Type")
-	if ct != "image/png" && ct != "image/jpeg" && ct != "image/svg+xml" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("unsupported type: %s (allowed: %s)", ct, brandingAllowedTypes)})
+	if header.Size > brandingMaxFileSize {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "file exceeds 2 MB"})
 		return
 	}
 
-	// Determine extension
-	ext := filepath.Ext(header.Filename)
-	if ext == "" {
-		switch ct {
-		case "image/png":
-			ext = ".png"
-		case "image/jpeg":
-			ext = ".jpg"
-		case "image/svg+xml":
-			ext = ".svg"
-		}
+	data, err := io.ReadAll(io.LimitReader(file, brandingMaxFileSize+1))
+	if err != nil || len(data) == 0 || len(data) > brandingMaxFileSize {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "could not read file or file exceeds 2 MB"})
+		return
 	}
-
-	// Validate final extension (prevents extension bypass)
-	if ext != ".png" && ext != ".jpg" && ext != ".svg" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("unsupported file extension: %s (allowed: .png, .jpg, .svg)", ext)})
+	data, ext, err := prepareBrandingAsset(data, header.Filename, pos)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		return
 	}
 
-	// Build destination filename
-	var destPath string
-	column := h.columnFor(svc, pos)
-	if pos == "favicon" {
-		destPath = filepath.Join(brandingLogoDir, svc+"_favicon"+ext)
-	} else {
-		destPath = filepath.Join(brandingLogoDir, svc+"_"+pos+ext)
-	}
-
-	// Remove old file with same base name (any extension)
-	oldBase := strings.TrimSuffix(destPath, ext)
-	matches, _ := filepath.Glob(oldBase + ".*")
-	for _, m := range matches {
-		os.Remove(m)
-	}
-
-	// Write new file (SVG files are sanitized to prevent stored XSS)
-	dst, err := os.Create(destPath)
+	baseName := svc + "_" + strings.ReplaceAll(pos, "-", "_")
+	destPath := filepath.Join(brandingLogoDir, baseName+ext)
+	tmp, err := os.CreateTemp(brandingLogoDir, ".branding-upload-*")
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "cannot write file"})
 		return
 	}
-	defer dst.Close()
-
-	if ext == ".svg" {
-		data, err := io.ReadAll(file)
-		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "read failed"})
-			return
-		}
-		sanitized := sanitizeSVG(data)
-		if _, err := dst.Write(sanitized); err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "write failed"})
-			return
-		}
-	} else {
-		if _, err := io.Copy(dst, file); err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "write failed"})
-			return
-		}
+	tmpName := tmp.Name()
+	defer os.Remove(tmpName)
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "write failed"})
+		return
+	}
+	if err := tmp.Close(); err != nil || os.Rename(tmpName, destPath) != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not finalize file"})
+		return
 	}
 
-	// Build web path
 	webPath := "/logos/" + filepath.Base(destPath)
-
-	// Update DB
 	cfg := h.getOrCreate()
-	if column != "" {
+	oldPath := h.assetPath(cfg, svc, pos)
+	h.setAsset(cfg, svc, pos, webPath)
+	column := h.columnFor(svc, pos)
+	if column != "" { // keep old clients operational during migration
 		h.setColumn(cfg, column, &webPath)
-		if err := h.db.Save(&cfg).Error; err != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "db update failed"})
-			return
+	}
+	if err := h.db.Save(&cfg).Error; err != nil {
+		os.Remove(destPath)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "db update failed"})
+		return
+	}
+
+	// Remove stale extensions only after both the new file and DB update exist.
+	matches, _ := filepath.Glob(filepath.Join(brandingLogoDir, baseName+".*"))
+	for _, match := range matches {
+		if match != destPath {
+			_ = os.Remove(match)
 		}
+	}
+	if oldPath != "" && filepath.Base(oldPath) != filepath.Base(webPath) {
+		_ = os.Remove(filepath.Join(brandingLogoDir, filepath.Base(oldPath)))
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"path": webPath, "column": column})
@@ -275,57 +206,19 @@ func (h *BrandingHandler) DeleteLogo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	column := h.columnFor(svc, pos)
 	cfg := h.getOrCreate()
-
-	// Get current path to delete the file
-	var currentPath *string
-	switch column {
-	case "logo_cores_sidebar":
-		currentPath = cfg.LogoCoresSidebar
-	case "logo_cores_login":
-		currentPath = cfg.LogoCoresLogin
-	case "logo_rental_sidebar":
-		currentPath = cfg.LogoRentalSidebar
-	case "logo_rental_login":
-		currentPath = cfg.LogoRentalLogin
-	case "logo_warehouse_sidebar":
-		currentPath = cfg.LogoWarehouseSidebar
-	case "logo_warehouse_login":
-		currentPath = cfg.LogoWarehouseLogin
-	case "logo_planner_sidebar":
-		currentPath = cfg.LogoPlannerSidebar
-	case "logo_planner_login":
-		currentPath = cfg.LogoPlannerLogin
-	case "logo_procurement_sidebar":
-		currentPath = cfg.LogoProcurementSidebar
-	case "logo_procurement_login":
-		currentPath = cfg.LogoProcurementLogin
-	case "favicon_cores":
-		currentPath = cfg.FaviconCores
-	case "favicon_rental":
-		currentPath = cfg.FaviconRental
-	case "favicon_warehouse":
-		currentPath = cfg.FaviconWarehouse
-	case "favicon_planner":
-		currentPath = cfg.FaviconPlanner
-	case "favicon_procurement":
-		currentPath = cfg.FaviconProcurement
-	case "favicon_path":
-		currentPath = cfg.FaviconPath
+	currentPath := h.assetPath(cfg, svc, pos)
+	h.setAsset(cfg, svc, pos, "")
+	column := h.columnFor(svc, pos)
+	if column != "" {
+		h.setColumn(cfg, column, nil)
 	}
-
-	if currentPath != nil && *currentPath != "" {
-		// Convert web path to filesystem path
-		fsPath := filepath.Join(brandingLogoDir, filepath.Base(*currentPath))
-		os.Remove(fsPath)
-	}
-
-	// Nullify column
-	h.setColumn(cfg, column, nil)
 	if err := h.db.Save(&cfg).Error; err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "db update failed"})
 		return
+	}
+	if currentPath != "" {
+		_ = os.Remove(filepath.Join(brandingLogoDir, filepath.Base(currentPath)))
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
@@ -337,41 +230,17 @@ func (h *BrandingHandler) DeleteLogo(w http.ResponseWriter, r *http.Request) {
 
 func (h *BrandingHandler) ServeLogo(w http.ResponseWriter, r *http.Request, svc string, pos string) {
 	cfg := h.getOrCreate()
-	var webPath *string
-	switch {
-	case svc == "cores" && pos == "sidebar":
-		webPath = cfg.LogoCoresSidebar
-	case svc == "cores" && pos == "login":
-		webPath = cfg.LogoCoresLogin
-	case svc == "rental" && pos == "sidebar":
-		webPath = cfg.LogoRentalSidebar
-	case svc == "rental" && pos == "login":
-		webPath = cfg.LogoRentalLogin
-	case svc == "warehouse" && pos == "sidebar":
-		webPath = cfg.LogoWarehouseSidebar
-	case svc == "warehouse" && pos == "login":
-		webPath = cfg.LogoWarehouseLogin
-	case svc == "planner" && pos == "sidebar":
-		webPath = cfg.LogoPlannerSidebar
-	case svc == "planner" && pos == "login":
-		webPath = cfg.LogoPlannerLogin
-	case svc == "procurement" && pos == "sidebar":
-		webPath = cfg.LogoProcurementSidebar
-	case svc == "procurement" && pos == "login":
-		webPath = cfg.LogoProcurementLogin
-	case pos == "favicon":
-		webPath = cfg.FaviconPath
-	default:
+	if !validService(svc) || !validPosition(pos) {
+		http.NotFound(w, r)
+		return
+	}
+	webPath := h.assetPath(cfg, svc, pos)
+	if webPath == "" {
 		http.NotFound(w, r)
 		return
 	}
 
-	if webPath == nil || *webPath == "" {
-		http.NotFound(w, r)
-		return
-	}
-
-	fsPath := filepath.Join(brandingLogoDir, filepath.Base(*webPath))
+	fsPath := filepath.Join(brandingLogoDir, filepath.Base(webPath))
 	// Prevent SVG script execution via Content-Security-Policy
 	if strings.HasSuffix(fsPath, ".svg") {
 		w.Header().Set("Content-Security-Policy", "sandbox")
@@ -473,6 +342,103 @@ func sanitizeAttrs(attrs []xml.Attr) []xml.Attr {
 	return filtered
 }
 
+func prepareBrandingAsset(data []byte, filename, position string) ([]byte, string, error) {
+	ext := strings.ToLower(filepath.Ext(filename))
+	if ext == ".jpeg" {
+		ext = ".jpg"
+	}
+
+	var width, height float64
+	switch ext {
+	case ".svg":
+		data = sanitizeSVG(data)
+		var err error
+		width, height, err = svgDimensions(data)
+		if err != nil {
+			return nil, "", fmt.Errorf("invalid SVG: %w", err)
+		}
+	case ".png", ".jpg":
+		if ext == ".jpg" && position != "print" {
+			return nil, "", fmt.Errorf("JPEG is only accepted for print assets; use transparent PNG or SVG")
+		}
+		cfg, format, err := image.DecodeConfig(bytes.NewReader(data))
+		if err != nil || (format != "png" && format != "jpeg") {
+			return nil, "", fmt.Errorf("file content is not a valid PNG or JPEG")
+		}
+		if (ext == ".png" && format != "png") || (ext == ".jpg" && format != "jpeg") {
+			return nil, "", fmt.Errorf("file extension does not match image content")
+		}
+		width, height = float64(cfg.Width), float64(cfg.Height)
+	default:
+		return nil, "", fmt.Errorf("unsupported file type; allowed: %s", brandingAllowedTypes)
+	}
+
+	if width <= 0 || height <= 0 {
+		return nil, "", fmt.Errorf("image dimensions must be positive")
+	}
+	if err := validateAspectRatio(position, width/height); err != nil {
+		return nil, "", err
+	}
+	return data, ext, nil
+}
+
+func svgDimensions(data []byte) (float64, float64, error) {
+	decoder := xml.NewDecoder(bytes.NewReader(data))
+	for {
+		token, err := decoder.Token()
+		if err != nil {
+			return 0, 0, fmt.Errorf("missing svg root")
+		}
+		start, ok := token.(xml.StartElement)
+		if !ok || strings.ToLower(start.Name.Local) != "svg" {
+			continue
+		}
+		attrs := make(map[string]string, len(start.Attr))
+		for _, attr := range start.Attr {
+			attrs[strings.ToLower(attr.Name.Local)] = attr.Value
+		}
+		if viewBox := strings.Fields(attrs["viewbox"]); len(viewBox) == 4 {
+			width, widthErr := strconv.ParseFloat(viewBox[2], 64)
+			height, heightErr := strconv.ParseFloat(viewBox[3], 64)
+			if widthErr == nil && heightErr == nil {
+				return width, height, nil
+			}
+		}
+		width, widthErr := parseSVGLength(attrs["width"])
+		height, heightErr := parseSVGLength(attrs["height"])
+		if widthErr != nil || heightErr != nil {
+			return 0, 0, fmt.Errorf("svg needs a numeric viewBox or width and height")
+		}
+		return width, height, nil
+	}
+}
+
+func parseSVGLength(value string) (float64, error) {
+	value = strings.TrimSpace(value)
+	for _, suffix := range []string{"px", "pt", "mm", "cm", "in"} {
+		value = strings.TrimSuffix(value, suffix)
+	}
+	return strconv.ParseFloat(value, 64)
+}
+
+func validateAspectRatio(position string, ratio float64) error {
+	switch position {
+	case "mark-on-dark", "mark-on-light", "favicon", "app-icon", "maskable-icon":
+		if ratio < 0.8 || ratio > 1.25 {
+			return fmt.Errorf("%s must be approximately square (aspect ratio 0.8–1.25)", position)
+		}
+	case "horizontal-on-dark", "horizontal-on-light", "sidebar":
+		if ratio < 1.4 || ratio > 6 {
+			return fmt.Errorf("%s must be horizontal (aspect ratio 1.4–6.0)", position)
+		}
+	case "stacked-on-dark", "stacked-on-light", "login":
+		if ratio < 0.7 || ratio > 1.7 {
+			return fmt.Errorf("%s must be a stacked lockup (aspect ratio 0.7–1.7)", position)
+		}
+	}
+	return nil
+}
+
 // ---------------------------------------------------------------------------
 // helpers
 // ---------------------------------------------------------------------------
@@ -490,10 +456,131 @@ func (h *BrandingHandler) getOrCreate() *models.BrandingConfig {
 }
 
 func (h *BrandingHandler) columnFor(svc, pos string) string {
+	if svc == "company" {
+		return ""
+	}
 	if pos == "favicon" {
 		return fmt.Sprintf("favicon_%s", svc)
 	}
-	return fmt.Sprintf("logo_%s_%s", svc, pos)
+	switch pos {
+	case "sidebar", "horizontal-on-dark":
+		return fmt.Sprintf("logo_%s_sidebar", svc)
+	case "login", "stacked-on-dark":
+		return fmt.Sprintf("logo_%s_login", svc)
+	}
+	return ""
+}
+
+func (h *BrandingHandler) assetPath(cfg *models.BrandingConfig, svc, pos string) string {
+	if cfg.Assets != nil {
+		if path := assetValue(cfg.Assets[svc], pos); path != "" {
+			return path
+		}
+	}
+	column := h.columnFor(svc, pos)
+	return derefStr(h.columnValue(cfg, column))
+}
+
+func (h *BrandingHandler) setAsset(cfg *models.BrandingConfig, svc, pos, value string) {
+	if cfg.Assets == nil {
+		cfg.Assets = make(map[string]commonbranding.AssetSet)
+	}
+	assets := cfg.Assets[svc]
+	setAssetValue(&assets, pos, value)
+	if assets == (commonbranding.AssetSet{}) {
+		delete(cfg.Assets, svc)
+	} else {
+		cfg.Assets[svc] = assets
+	}
+}
+
+func assetValue(assets commonbranding.AssetSet, pos string) string {
+	switch pos {
+	case "mark-on-dark":
+		return assets.MarkOnDark
+	case "mark-on-light":
+		return assets.MarkOnLight
+	case "horizontal-on-dark", "sidebar":
+		return assets.HorizontalOnDark
+	case "horizontal-on-light":
+		return assets.HorizontalOnLight
+	case "stacked-on-dark", "login":
+		return assets.StackedOnDark
+	case "stacked-on-light":
+		return assets.StackedOnLight
+	case "favicon":
+		return assets.Favicon
+	case "app-icon":
+		return assets.AppIcon
+	case "maskable-icon":
+		return assets.MaskableIcon
+	case "print":
+		return assets.Print
+	}
+	return ""
+}
+
+func setAssetValue(assets *commonbranding.AssetSet, pos, value string) {
+	switch pos {
+	case "mark-on-dark":
+		assets.MarkOnDark = value
+	case "mark-on-light":
+		assets.MarkOnLight = value
+	case "horizontal-on-dark", "sidebar":
+		assets.HorizontalOnDark = value
+	case "horizontal-on-light":
+		assets.HorizontalOnLight = value
+	case "stacked-on-dark", "login":
+		assets.StackedOnDark = value
+	case "stacked-on-light":
+		assets.StackedOnLight = value
+	case "favicon":
+		assets.Favicon = value
+	case "app-icon":
+		assets.AppIcon = value
+	case "maskable-icon":
+		assets.MaskableIcon = value
+	case "print":
+		assets.Print = value
+	}
+}
+
+func (h *BrandingHandler) columnValue(cfg *models.BrandingConfig, column string) *string {
+	switch column {
+	case "logo_cores_sidebar":
+		return cfg.LogoCoresSidebar
+	case "logo_cores_login":
+		return cfg.LogoCoresLogin
+	case "logo_rental_sidebar":
+		return cfg.LogoRentalSidebar
+	case "logo_rental_login":
+		return cfg.LogoRentalLogin
+	case "logo_warehouse_sidebar":
+		return cfg.LogoWarehouseSidebar
+	case "logo_warehouse_login":
+		return cfg.LogoWarehouseLogin
+	case "logo_planner_sidebar":
+		return cfg.LogoPlannerSidebar
+	case "logo_planner_login":
+		return cfg.LogoPlannerLogin
+	case "logo_procurement_sidebar":
+		return cfg.LogoProcurementSidebar
+	case "logo_procurement_login":
+		return cfg.LogoProcurementLogin
+	case "favicon_cores":
+		return cfg.FaviconCores
+	case "favicon_rental":
+		return cfg.FaviconRental
+	case "favicon_warehouse":
+		return cfg.FaviconWarehouse
+	case "favicon_planner":
+		return cfg.FaviconPlanner
+	case "favicon_procurement":
+		return cfg.FaviconProcurement
+	case "favicon_path":
+		return cfg.FaviconPath
+	}
+	return nil
 }
 
 func (h *BrandingHandler) setColumn(cfg *models.BrandingConfig, column string, val *string) {
@@ -535,7 +622,7 @@ func (h *BrandingHandler) setColumn(cfg *models.BrandingConfig, column string, v
 
 func validService(s string) bool {
 	switch s {
-	case "cores", "rental", "warehouse", "planner", "procurement":
+	case "cores", "rental", "warehouse", "planner", "procurement", "company":
 		return true
 	}
 	return false
@@ -543,7 +630,9 @@ func validService(s string) bool {
 
 func validPosition(s string) bool {
 	switch s {
-	case "sidebar", "login", "favicon":
+	case "sidebar", "login", "mark-on-dark", "mark-on-light",
+		"horizontal-on-dark", "horizontal-on-light", "stacked-on-dark",
+		"stacked-on-light", "favicon", "app-icon", "maskable-icon", "print":
 		return true
 	}
 	return false

@@ -55,10 +55,10 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
       {/* Logo */}
       <div className="flex items-center gap-3 px-3 py-4 border-b border-white/5 flex-shrink-0">
         <img
-          src={branding.sidebarLogo}
-          alt={branding.companyName}
-          className="flex-shrink-0 h-12"
-          style={{ filter: 'drop-shadow(0 0 14px rgba(var(--accent-red-rgb), 0.3))', height: `${48 * branding.logoSizeSidebar / 100}px` }}
+          src={expanded ? branding.assets.horizontalOnDark : branding.assets.markOnDark}
+          alt={branding.productName}
+          className={expanded ? 'h-12 max-w-full flex-shrink-0 object-contain' : 'h-8 w-8 flex-shrink-0 object-contain'}
+          style={{ filter: 'drop-shadow(0 0 14px rgba(var(--accent-red-rgb), 0.3))' }}
         />
       </div>
 
@@ -169,10 +169,10 @@ export function Layout({ children }: { children: ReactNode }) {
           <Menu className="w-5 h-5" />
         </button>
         <img
-          src={layoutBranding.sidebarLogo}
-          alt={layoutBranding.companyName}
-          className="h-9"
-          style={{ filter: 'drop-shadow(0 0 12px rgba(var(--accent-red-rgb), 0.25))', height: `${36 * layoutBranding.logoSizeSidebar / 100}px` }}
+          src={layoutBranding.assets.horizontalOnDark}
+          alt={layoutBranding.productName}
+          className="h-9 max-w-44 object-contain"
+          style={{ filter: 'drop-shadow(0 0 12px rgba(var(--accent-red-rgb), 0.25))' }}
         />
       </header>
 

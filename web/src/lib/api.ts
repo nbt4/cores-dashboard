@@ -213,6 +213,19 @@ export const contactsApi = {
 
 // ---- Branding API types ----
 
+export interface BrandingAssetSet {
+  markOnDark?: string;
+  markOnLight?: string;
+  horizontalOnDark?: string;
+  horizontalOnLight?: string;
+  stackedOnDark?: string;
+  stackedOnLight?: string;
+  favicon?: string;
+  appIcon?: string;
+  maskableIcon?: string;
+  print?: string;
+}
+
 export interface BrandingConfig {
   id: number;
   companyName: string;
@@ -227,7 +240,13 @@ export interface BrandingConfig {
   logoPlannerLogin: string | null;
   logoProcurementSidebar: string | null;
   logoProcurementLogin: string | null;
+  faviconCores: string | null;
+  faviconRental: string | null;
+  faviconWarehouse: string | null;
+  faviconPlanner: string | null;
+  faviconProcurement: string | null;
   faviconPath: string | null;
+  assets: Record<string, BrandingAssetSet> | null;
   logoSizeSidebar: number;
   logoSizeLogin: number;
   createdAt: string;
@@ -245,7 +264,7 @@ export function getLogoPath(cfg: BrandingConfig | null, service: string, positio
 
 export const brandingApi = {
   get: () => api.get<BrandingConfig>('/admin/branding'),
-  update: (data: Partial<Pick<BrandingConfig, 'companyName' | 'brandName' | 'logoSizeSidebar' | 'logoSizeLogin'>>) =>
+  update: (data: Partial<Pick<BrandingConfig, 'companyName' | 'brandName'>>) =>
     api.put<BrandingConfig>('/admin/branding', data),
   uploadLogo: (service: string, position: string, file: File) => {
     const formData = new FormData();

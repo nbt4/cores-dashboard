@@ -17,6 +17,14 @@
 - **Statisches Embedding** — Frontend (React/Vite) und Backend (Go) in einem Binary via `embed`. Keine separaten Assets nötig
 - **Installierbare Mobile-App (PWA)** — Eigenes Homescreen-Icon, Standalone-Modus, Safe-Area-Unterstützung und touchoptimierte Navigation für iPhone, iPad und Android
 
+### Branding
+
+Unter **Administration → Branding** werden Unternehmensmarke und alle fünf
+Produktmarken getrennt verwaltet. Verfügbar sind Varianten für helle/dunkle
+Flächen, Navigation, Login, Favicon und installierte PWA. Uploads werden nach
+Dateityp, Inhalt und Seitenverhältnis validiert; SVG-Dateien werden vor dem
+Speichern bereinigt. Öffentliche Clients lesen `/api/v1/branding`.
+
 ---
 
 ## Tech-Stack

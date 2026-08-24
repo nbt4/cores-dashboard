@@ -47,12 +47,12 @@ export function Login() {
 
           <div className="flex flex-col items-center gap-3">
             <img
-              src={branding.loginLogo}
-              alt={branding.companyName}
-              className="h-20"
-              style={{ filter: 'drop-shadow(0 0 18px rgba(var(--accent-red-rgb), 0.3))', height: `${80 * branding.logoSizeLogin / 100}px` }}
+              src={branding.assets.stackedOnDark}
+              alt={branding.productName}
+              className="h-28 max-w-64 object-contain"
+              style={{ filter: 'drop-shadow(0 0 18px rgba(var(--accent-red-rgb), 0.3))' }}
             />
-            <p className="text-gray-500 text-xs">{branding.companyName}</p>
+            {(branding.brandName || branding.companyName !== branding.productName) && <p className="text-gray-500 text-xs">by {branding.brandName || branding.companyName}</p>}
           </div>
 
           {methods.microsoftEnabled && <button type="button" onClick={() => { window.location.href = '/api/v1/auth/microsoft/start'; }}

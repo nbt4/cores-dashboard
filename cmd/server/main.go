@@ -99,14 +99,14 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
 				"service": "cores-dashboard",
-				"version": "1.14.16",
+				"version": "1.14.17",
 			})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "ok",
 			"service": "cores-dashboard",
-			"version": "1.14.16",
+			"version": "1.14.17",
 		})
 	})
 
@@ -185,6 +185,9 @@ func main() {
 	mux.Handle("/api/v1/analytics/", protected)
 	mux.Handle("/api/v1/proxy/", adminProtected)
 	mux.Handle("/api/v1/admin/", adminProtected)
+	// Planner branding is public so the mounted /planner SPA can resolve its
+	// own product assets instead of inheriting the dashboard branding.
+	mux.HandleFunc("/api/v1/planner/branding", proxyHandler.ProxyPlanner)
 
 	// Plannercore SPA proxy (public — auth handled by Plannercore itself)
 	mux.HandleFunc("/planner/", proxyHandler.ProxyPlannerSpa)
@@ -252,6 +255,14 @@ func main() {
 		}
 		if r.URL.Path == "/manifest.webmanifest" {
 			w.Header().Set("Content-Type", "application/manifest+json")
+			w.Header().Set("Cache-Control", "no-cache")
+			cfg := brandingHandler.GetBrandingPublic("cores")
+			_ = json.NewEncoder(w).Encode(commonbranding.Manifest(cfg, commonbranding.ManifestOptions{
+				Name: "Cores", StartURL: "/", Scope: "/",
+				FallbackIcon192: "/app-icons/icon-192.png", FallbackIcon512: "/app-icons/icon-512.png",
+				FallbackMaskable: "/app-icons/icon-maskable-512.png",
+			}))
+			return
 		}
 		if r.URL.Path != "/" {
 			f, err := distFS.Open(r.URL.Path[1:])
