@@ -102,7 +102,7 @@ export function BrandingTab() {
       await fetchConfig();
       notify('success', `${SERVICE_LABELS[service]} aktualisiert.`);
     } catch {
-      notify('error', 'Upload abgelehnt. Bitte Dateityp, Seitenverhältnis und 2-MB-Limit prüfen.');
+      notify('error', 'Upload abgelehnt. Bitte Dateityp, Bildinhalt und Seitenverhältnis prüfen.');
     } finally {
       setUploading(null);
     }

@@ -27,7 +27,6 @@ var brandingLog = zerolog.New(os.Stderr).With().Timestamp().Str("component", "br
 
 const (
 	brandingLogoDir      = "/var/lib/branding/logos"
-	brandingMaxFileSize  = 2 << 20
 	brandingAllowedTypes = "image/png,image/svg+xml (JPEG only for print assets)"
 )
 
@@ -108,9 +107,10 @@ func (h *BrandingHandler) UpdateBranding(w http.ResponseWriter, r *http.Request)
 // ---------------------------------------------------------------------------
 
 func (h *BrandingHandler) UploadLogo(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, brandingMaxFileSize+(512<<10))
-	if err := r.ParseMultipartForm(brandingMaxFileSize); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "upload exceeds 2 MB or is not valid multipart data"})
+	// ParseMultipartForm's argument is only the in-memory threshold; larger
+	// uploads spill to a temporary file and are not rejected by size.
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid multipart data"})
 		return
 	}
 
@@ -131,14 +131,9 @@ func (h *BrandingHandler) UploadLogo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer file.Close()
-	if header.Size > brandingMaxFileSize {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "file exceeds 2 MB"})
-		return
-	}
-
-	data, err := io.ReadAll(io.LimitReader(file, brandingMaxFileSize+1))
-	if err != nil || len(data) == 0 || len(data) > brandingMaxFileSize {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "could not read file or file exceeds 2 MB"})
+	data, err := io.ReadAll(file)
+	if err != nil || len(data) == 0 {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "could not read file"})
 		return
 	}
 	data, ext, err := prepareBrandingAsset(data, header.Filename, pos)
