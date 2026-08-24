@@ -99,14 +99,14 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
 				"service": "cores-dashboard",
-				"version": "1.14.18",
+				"version": "1.14.19",
 			})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "ok",
 			"service": "cores-dashboard",
-			"version": "1.14.18",
+			"version": "1.14.19",
 		})
 	})
 

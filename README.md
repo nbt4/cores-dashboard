@@ -84,6 +84,10 @@ cores-dashboard:
     - branding_data:/var/lib/branding/logos
 ```
 
+Beim Containerstart wird das persistente Branding-Volume automatisch dem
+unprivilegierten Anwendungsbenutzer zugeordnet. Dadurch bleiben Logo-Uploads
+auch mit neu angelegten Docker-Volumes beschreibbar.
+
 ---
 
 ## API-Endpunkte

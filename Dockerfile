@@ -19,11 +19,11 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/server/
 
 # Stage 3: Runtime
 FROM alpine:3.21
-RUN apk add --no-cache ca-certificates tzdata && mkdir -p /var/lib/branding/logos
+RUN apk add --no-cache ca-certificates su-exec tzdata && mkdir -p /var/lib/branding/logos
 WORKDIR /app
 COPY --from=builder /app/server .
-# FIXED: Container runs as root — add non-root USER directive
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup && chown -R appuser:appgroup /var/lib/branding /app
-USER appuser:appgroup
+COPY --chmod=755 docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 EXPOSE 8080
+ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["./server"]

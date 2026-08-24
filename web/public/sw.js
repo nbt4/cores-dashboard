@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'cores-dashboard-'
-const CACHE_NAME = `${CACHE_PREFIX}shell-v1`
+const CACHE_NAME = `${CACHE_PREFIX}shell-v2`
 const SCOPE_URL = new URL(self.registration.scope)
 const SHELL_URLS = [
   SCOPE_URL.href,
@@ -43,15 +43,16 @@ self.addEventListener('fetch', (event) => {
   const cacheable = new Set(['font', 'image', 'script', 'style'])
   if (!cacheable.has(request.destination) && !url.pathname.endsWith('/manifest.webmanifest')) return
 
-  event.respondWith(
-    caches.match(request).then((cached) => {
-      const refresh = fetch(request).then((response) => {
-        if (response.ok) {
-          event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone())))
-        }
-        return response
-      })
-      return cached || refresh
-    }),
-  )
+  const refresh = fetch(request).then(async (response) => {
+    if (response.ok) {
+      const cacheCopy = response.clone()
+      const cache = await caches.open(CACHE_NAME)
+      await cache.put(request, cacheCopy)
+    }
+    return response
+  })
+
+  // Register background refresh work while the fetch event is still active.
+  event.waitUntil(refresh.then(() => undefined).catch(() => undefined))
+  event.respondWith(caches.match(request).then((cached) => cached || refresh))
 })

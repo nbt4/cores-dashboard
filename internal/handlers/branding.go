@@ -113,6 +113,9 @@ func (h *BrandingHandler) UploadLogo(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid multipart data"})
 		return
 	}
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
 
 	svc := r.FormValue("service")
 	pos := r.FormValue("position")
@@ -146,17 +149,25 @@ func (h *BrandingHandler) UploadLogo(w http.ResponseWriter, r *http.Request) {
 	destPath := filepath.Join(brandingLogoDir, baseName+ext)
 	tmp, err := os.CreateTemp(brandingLogoDir, ".branding-upload-*")
 	if err != nil {
+		brandingLog.Error().Err(err).Str("dir", brandingLogoDir).Msg("could not create upload file")
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "cannot write file"})
 		return
 	}
 	tmpName := tmp.Name()
 	defer os.Remove(tmpName)
 	if _, err := tmp.Write(data); err != nil {
-		tmp.Close()
+		_ = tmp.Close()
+		brandingLog.Error().Err(err).Str("file", tmpName).Msg("could not write upload file")
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "write failed"})
 		return
 	}
-	if err := tmp.Close(); err != nil || os.Rename(tmpName, destPath) != nil {
+	if err := tmp.Close(); err != nil {
+		brandingLog.Error().Err(err).Str("file", tmpName).Msg("could not close upload file")
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not finalize file"})
+		return
+	}
+	if err := os.Rename(tmpName, destPath); err != nil {
+		brandingLog.Error().Err(err).Str("source", tmpName).Str("destination", destPath).Msg("could not finalize upload file")
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not finalize file"})
 		return
 	}
@@ -170,7 +181,8 @@ func (h *BrandingHandler) UploadLogo(w http.ResponseWriter, r *http.Request) {
 		h.setColumn(cfg, column, &webPath)
 	}
 	if err := h.db.Save(&cfg).Error; err != nil {
-		os.Remove(destPath)
+		_ = os.Remove(destPath)
+		brandingLog.Error().Err(err).Str("service", svc).Str("position", pos).Msg("could not update branding configuration")
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "db update failed"})
 		return
 	}
