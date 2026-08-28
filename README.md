@@ -10,7 +10,8 @@
 - **Microsoft Entra Identity** — Umschaltbare lokale, Microsoft- oder hybride Benutzerquelle mit gruppenbasierter Synchronisation und Microsoft-Login
 - **Zentrale Microsoft-App** — Eine App-Registrierung für Entra-Benutzer, Cores-Login sowie RentalCore-Kontakt-/Kalenderfunktionen; inklusive Einrichtungs- und Rechtehilfe im Dashboard
 - **Reverse Proxy** — Transparentes Durchreichen von API-Requests an RentalCore, WarehouseCore und Plannercore. Plannercore-SPA nahtlos eingebettet unter `/planner/`
-- **Unified Analytics** — Dashboard-Übersicht mit aggregierten Kennzahlen aus allen Cores-Services (Geräte, Jobs, Auslastung, Umsätze)
+- **Live-Operations-Cockpit** — Handlungsorientiertes Lagebild aus allen Cores-Services mit priorisierten Vorgängen, Umsatz, aktiven Jobs, Lagerbereitschaft, persönlichen Planner-Aufgaben, Beschaffungsfreigaben und direktem Einstieg in den zuständigen Arbeitsbereich
+- **Plattformgesundheit** — Parallele Healthchecks für alle fünf Cores-Dienste und PostgreSQL inklusive Versionen und Antwortzeiten; gestörte Komponenten erscheinen unmittelbar im Handlungsbedarf
 - **Branding & Theming** — Dynamisches Whitelabeling: eigenes Logo, Firmenname und Favicon pro Tenant. Upload über die Admin-Oberfläche
 - **Cross-Service Navigation** — Einheitliche Navbar mit direkten Links zu allen Sub-Services
 - **Config API** — Öffentlicher Endpoint liefert alle Cross-Links und Branding-Daten für clientseitige Integration
@@ -26,6 +27,17 @@ Flächen, Navigation, Login, Favicon und installierte PWA. Uploads werden nach
 Dateityp und Inhalt validiert; empfohlene Seitenverhältnisse sind keine harte
 Upload-Grenze. SVG-Dateien werden vor dem Speichern bereinigt. Öffentliche
 Clients lesen `/api/v1/branding`.
+
+### Zentrales Lagebild
+
+Das Dashboard aktualisiert sein organisationsweites Lagebild automatisch alle
+60 Sekunden. `GET /api/v1/analytics/summary` fragt RentalCore, WarehouseCore,
+PlannerCore und ProcurementCore parallel ab, damit ein langsamer Dienst die
+übrigen Daten nicht blockiert. Der Endpunkt liefert 30-Tage-Umsatz,
+Lagerbereitschaft und Rückläufe, persönliche offene und überfällige Aufgaben,
+Beschaffungsfreigaben und Preisalarme sowie den Zustand aller Cores-Dienste und
+der Datenbank. Ausgefallene Teildaten werden gekennzeichnet, während das
+restliche Lagebild weiter verfügbar bleibt.
 
 ---
 
@@ -108,7 +120,8 @@ Funktionen ohnehin die Live-APIs benötigt.
 | `GET`    | `/api/v1/auth/me`                 | Aktuellen Benutzer abrufen (🔒)              |
 | `GET`    | `/api/v1/config`                  | Öffentliche Konfiguration und Cross-Links   |
 | `GET`    | `/api/v1/branding`                | Öffentliche Branding-Daten (Logo, Name)     |
-| `GET`    | `/api/v1/analytics/summary`       | Aggregierte Dashboard-Kennzahlen (🔒)        |
+| `GET`    | `/api/v1/analytics/summary`       | Cores-Lagebild, Prioritäten und Health (🔒)  |
+| `GET`    | `/api/v1/admin/health`            | Service-Versionen und Antwortzeiten (🔒 Admin) |
 | `GET`    | `/api/v1/admin/branding`          | Branding-Konfiguration abrufen (🔒 Admin)    |
 | `PUT`    | `/api/v1/admin/branding`          | Branding aktualisieren (🔒 Admin)            |
 | `POST`   | `/api/v1/admin/branding/logo`     | Logo hochladen (🔒 Admin)                    |

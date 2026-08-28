@@ -79,7 +79,7 @@ func main() {
 
 	// Health dashboard (admin only)
 	healthHandler := admin.NewHealthHandler(cfg, db)
-	mux.HandleFunc("GET /api/v1/admin/health", healthHandler.ServeHTTP)
+	mux.Handle("GET /api/v1/admin/health", requireAdmin(http.HandlerFunc(healthHandler.ServeHTTP)))
 
 	// Audit log (admin only)
 	auditHandler := audit.NewAuditHandler(sqlDB)
@@ -99,19 +99,19 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
 				"service": "cores-dashboard",
-				"version": "1.14.21",
+				"version": "1.14.22",
 			})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "ok",
 			"service": "cores-dashboard",
-			"version": "1.14.21",
+			"version": "1.14.22",
 		})
 	})
 
 	authHandler := handlers.NewAuthHandler(cfg, db, microsoftService)
-	analyticsHandler := handlers.NewAnalyticsHandler(cfg)
+	analyticsHandler := handlers.NewAnalyticsHandler(cfg, healthHandler)
 	brandingHandler := handlers.NewBrandingHandler(db)
 	microsoftHandler := handlers.NewMicrosoftHandler(microsoftService)
 	usersHandler := handlers.NewUsersHandler(db, microsoftService)

@@ -57,13 +57,14 @@ type AggregatedHealth struct {
 
 // ServiceHealth represents the health status of a single service.
 type ServiceHealth struct {
-	Status  string `json:"status"`
-	Version string `json:"version,omitempty"`
-	Error   string `json:"error,omitempty"`
+	Status    string `json:"status"`
+	Version   string `json:"version,omitempty"`
+	Error     string `json:"error,omitempty"`
+	LatencyMS int64  `json:"latency_ms,omitempty"`
 }
 
 // VERSION is the cores-dashboard version string.
-const VERSION = "1.14.21"
+const VERSION = "1.14.22"
 
 // ServeHTTP handles GET /api/v1/admin/health (admin-only).
 func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -81,6 +82,15 @@ func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	agg := h.Collect(r.Context())
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(agg)
+}
+
+// Collect checks the complete Cores platform and can be reused by authenticated
+// operational views without exposing the admin endpoint itself.
+func (h *HealthHandler) Collect(ctx context.Context) AggregatedHealth {
 	agg := AggregatedHealth{
 		Timestamp: time.Now().UTC().Format(time.RFC3339),
 	}
@@ -94,7 +104,7 @@ func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Build list of external services to check
 	services := []serviceTarget{
 		{"rentalcore", h.cfg.RentalCoreURL + "/health"},
-		{"warehousecore", h.cfg.WarehouseCoreURL + "/health"},
+		{"warehousecore", h.cfg.WarehouseCoreURL + "/api/v1/health"},
 		{"plannercore", h.cfg.PlannercoreURL + "/health"},
 		{"procurementcore", h.cfg.ProcurementCoreURL + "/health"},
 	}
@@ -107,7 +117,7 @@ func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		wg.Add(1)
 		go func(svc serviceTarget) {
 			defer wg.Done()
-			sh := h.checkService(svc.name, svc.url)
+			sh := h.checkService(ctx, svc.name, svc.url)
 			mu.Lock()
 			switch svc.name {
 			case "rentalcore":
@@ -127,7 +137,7 @@ func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		dbHealth := h.checkDatabase()
+		dbHealth := h.checkDatabase(ctx)
 		mu.Lock()
 		agg.Database = dbHealth
 		mu.Unlock()
@@ -135,13 +145,13 @@ func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	wg.Wait()
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(agg)
+	return agg
 }
 
-func (h *HealthHandler) checkService(name, url string) ServiceHealth {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+func (h *HealthHandler) checkService(parent context.Context, name, url string) ServiceHealth {
+	ctx, cancel := context.WithTimeout(parent, 3*time.Second)
 	defer cancel()
+	start := time.Now()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
@@ -181,12 +191,13 @@ func (h *HealthHandler) checkService(name, url string) ServiceHealth {
 	}
 
 	return ServiceHealth{
-		Status:  status,
-		Version: hr.Version,
+		Status:    status,
+		Version:   hr.Version,
+		LatencyMS: time.Since(start).Milliseconds(),
 	}
 }
 
-func (h *HealthHandler) checkDatabase() ServiceHealth {
+func (h *HealthHandler) checkDatabase(parent context.Context) ServiceHealth {
 	sqlDB, err := h.db.DB()
 	if err != nil {
 		return ServiceHealth{
@@ -195,8 +206,9 @@ func (h *HealthHandler) checkDatabase() ServiceHealth {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(parent, 3*time.Second)
 	defer cancel()
+	start := time.Now()
 
 	if err := sqlDB.PingContext(ctx); err != nil {
 		return ServiceHealth{
@@ -206,6 +218,7 @@ func (h *HealthHandler) checkDatabase() ServiceHealth {
 	}
 
 	return ServiceHealth{
-		Status: "ok",
+		Status:    "ok",
+		LatencyMS: time.Since(start).Milliseconds(),
 	}
 }
