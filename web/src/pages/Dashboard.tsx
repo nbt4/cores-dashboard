@@ -9,6 +9,7 @@ import { api } from '../lib/api';
 import { toast } from '../lib/toast';
 import { useAppConfig } from '../hooks/useAppConfig';
 import { useAuth } from '../contexts/AuthContext';
+import { suiteGreeting } from '../lib/cores-design';
 
 interface ServiceHealth {
   status: string;
@@ -163,25 +164,25 @@ export function Dashboard() {
   if ((procurement.triggeredAlerts || 0) > 0) priorities.push({ title: 'Preisalarme prüfen', detail: 'Beschaffungsangebote haben definierte Schwellwerte erreicht.', value: procurement.triggeredAlerts || 0, tone: 'info', href: joinURL(config?.procurementUrl, '/alerts') });
 
   return (
-    <div className="space-y-5 pb-4 sm:space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em]" style={{ color: unhealthy.length ? 'var(--color-warning)' : 'var(--color-success)' }}>
-            <span className="h-2 w-2 animate-pulse rounded-full" style={{ background: 'currentColor' }} />
+    <div className="suite-dashboard">
+      <header className="suite-dashboard-header">
+        <div className="suite-dashboard-heading">
+          <div className="suite-dashboard-eyebrow" style={{ color: unhealthy.length ? 'var(--color-warning)' : 'var(--color-success)' }}>
+            <span className="suite-dashboard-eyebrow-dot animate-pulse" />
             Cores Live-Lagebild
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">Moin, {user?.username || 'Team'}.</h1>
-          <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>Was heute zählt – über alle Cores hinweg.</p>
+          <h1 className="suite-dashboard-title">{suiteGreeting(user)}</h1>
+          <p className="suite-dashboard-subtitle">Was heute zählt – über alle Cores hinweg.</p>
         </div>
-        <div className="flex items-center gap-3">
-          {lastUpdated && <span className="hidden text-xs sm:block" style={{ color: 'var(--text-tertiary)' }}>Aktualisiert {lastUpdated.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>}
-          <button type="button" onClick={() => void load(true)} disabled={refreshing} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:opacity-50" style={{ borderColor: 'var(--border-default)', background: 'var(--surface-1)', color: 'var(--text-secondary)' }}><RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />Aktualisieren</button>
+        <div className="suite-dashboard-actions">
+          {lastUpdated && <span className="suite-dashboard-timestamp">Aktualisiert {lastUpdated.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>}
+          <button type="button" onClick={() => void load(true)} disabled={refreshing} className="suite-button"><RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />Aktualisieren</button>
         </div>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="suite-kpi-grid">
         <KpiCard icon={CircleDollarSign} label="Umsatz · 30 Tage" value={formatEuro(rental.totalRevenue)} detail={`${formatNumber(rental.totalJobs)} abgeschlossene Jobs`} color="var(--color-success)" href={config?.rentalUrl || '#'} />
-        <KpiCard icon={BriefcaseBusiness} label="Aktive Jobs" value={formatNumber(w.active_jobs)} detail={`${w.in_storage || 0} Geräte physisch im Lager`} color="var(--accent-red-light)" href={config?.rentalUrl || '#'} />
+        <KpiCard icon={BriefcaseBusiness} label="Aktive Jobs" value={formatNumber(w.active_jobs)} detail={`${w.in_storage || 0} Geräte physisch im Lager`} color="var(--accent-red)" href={config?.rentalUrl || '#'} />
         <KpiCard icon={PackageCheck} label="Lagerbereit" value={`${readiness}%`} detail={`${w.ready_for_dispatch || 0} von ${w.total || 0} Geräten`} color="var(--color-info)" href={config?.warehouseUrl || '#'} progress={readiness} />
         <KpiCard icon={HeartPulse} label="Plattformstatus" value={`${healthyServices}/${services.length}`} detail={unhealthy.length ? `${unhealthy.length} Dienst${unhealthy.length === 1 ? '' : 'e'} prüfen` : 'Alle Dienste erreichbar'} color={unhealthy.length ? 'var(--color-warning)' : 'var(--color-success)'} href="#service-status" />
       </section>
@@ -209,15 +210,15 @@ export function Dashboard() {
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <CoreCard icon={BriefcaseBusiness} name="RentalCore" eyebrow="Aufträge & Kunden" color="var(--accent-red)" href={config?.rentalUrl || '#'} metrics={[`${formatEuro(rental.totalRevenue)} Umsatz`, `${formatNumber(rental.totalJobs)} Jobs · 30 Tage`]} error={rental.error} />
           <CoreCard icon={Warehouse} name="WarehouseCore" eyebrow="Lager & Material" color="var(--color-info)" href={config?.warehouseUrl || '#'} metrics={[`${w.ready_for_dispatch || 0} lagerbereit`, `${w.movements_today || 0} Bewegungen heute`]} error={w.error} />
-          <CoreCard icon={Kanban} name="PlannerCore" eyebrow="Aufgaben & Planung" color="#a78bfa" href={config?.plannerUrl || '/planner/'} metrics={[`${planner.openTasks || 0} offene Aufgaben`, `${planner.overdue || 0} überfällig · ${planner.dueToday || 0} heute`]} error={planner.error} />
-          <CoreCard icon={ShoppingBasket} name="ProcurementCore" eyebrow="Einkauf & Beschaffung" color="#fb7185" href={config?.procurementUrl || '#'} metrics={[`${procurement.pendingApprovals || 0} Freigaben offen`, `${formatEuroCents(procurement.spend?.cents)} Bestellwert`]} error={procurement.error} />
+          <CoreCard icon={Kanban} name="PlannerCore" eyebrow="Aufgaben & Planung" color="var(--accent-red)" href={config?.plannerUrl || '/planner/'} metrics={[`${planner.openTasks || 0} offene Aufgaben`, `${planner.overdue || 0} überfällig · ${planner.dueToday || 0} heute`]} error={planner.error} />
+          <CoreCard icon={ShoppingBasket} name="ProcurementCore" eyebrow="Einkauf & Beschaffung" color="var(--accent-red)" href={config?.procurementUrl || '#'} metrics={[`${procurement.pendingApprovals || 0} Freigaben offen`, `${formatEuroCents(procurement.spend?.cents)} Bestellwert`]} error={procurement.error} />
         </div>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
         <div className="card overflow-hidden">
-          <SectionHeader icon={Kanban} title="Meine Planner-Prioritäten" subtitle={`${planner.inProgress || 0} Aufgaben in Arbeit`} tone="#a78bfa" />
-          {!planner.priorities?.length ? <EmptyPanel icon={CheckCircle2} text="Keine überfälligen oder hoch priorisierten Aufgaben." /> : <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>{planner.priorities.map(task => <a key={task.id} href={config?.plannerUrl || '/planner/'} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.035] sm:px-5"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: task.isLate ? 'var(--color-danger)' : '#a78bfa' }} /><div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold text-white">{task.title}</div><div className="mt-0.5 text-xs" style={{ color: 'var(--text-tertiary)' }}>{task.isLate ? 'Überfällig' : task.priority === 'urgent' ? 'Dringend' : 'Hohe Priorität'} · {task.progress}%</div></div><ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" style={{ color: 'var(--text-tertiary)' }} /></a>)}</div>}
+          <SectionHeader icon={Kanban} title="Meine Planner-Prioritäten" subtitle={`${planner.inProgress || 0} Aufgaben in Arbeit`} tone="var(--accent-red)" />
+          {!planner.priorities?.length ? <EmptyPanel icon={CheckCircle2} text="Keine überfälligen oder hoch priorisierten Aufgaben." /> : <div className="divide-y" style={{ borderColor: 'var(--border-subtle)' }}>{planner.priorities.map(task => <a key={task.id} href={config?.plannerUrl || '/planner/'} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.035] sm:px-5"><span className="h-2 w-2 shrink-0 rounded-full" style={{ background: task.isLate ? 'var(--color-danger)' : 'var(--accent-red)' }} /><div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold text-white">{task.title}</div><div className="mt-0.5 text-xs" style={{ color: 'var(--text-tertiary)' }}>{task.isLate ? 'Überfällig' : task.priority === 'urgent' ? 'Dringend' : 'Hohe Priorität'} · {task.progress}%</div></div><ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" style={{ color: 'var(--text-tertiary)' }} /></a>)}</div>}
         </div>
 
         <div className="card p-4 sm:p-5">
@@ -225,8 +226,8 @@ export function Dashboard() {
           <div className="mt-5 space-y-4">
             <PulseRow icon={Boxes} label="Material ohne Lagerplatz" value={unassigned} detail={`${wo.unplaced_product_quantity || 0} Mengeneinheiten zusätzlich`} color={unassigned ? 'var(--color-danger)' : 'var(--color-success)'} />
             <PulseRow icon={Clock3} label="Rücklauf offen" value={(w.return_pending || 0) + (w.cases_return_check || 0)} detail={`${w.cases_packing || 0} Cases im Packprozess`} color="var(--color-warning)" />
-            <PulseRow icon={Wrench} label="Technische Vorgänge" value={(w.open_defects || 0) + (w.overdue_inspections || 0)} detail="Defekte und überfällige Prüfungen" color="var(--accent-red-light)" />
-            <PulseRow icon={Building2} label="Beschaffungsalarme" value={(procurement.pendingApprovals || 0) + (procurement.triggeredAlerts || 0)} detail={`${formatEuroCents(procurement.savings?.cents)} dokumentierte Ersparnis`} color="#fb7185" />
+            <PulseRow icon={Wrench} label="Technische Vorgänge" value={(w.open_defects || 0) + (w.overdue_inspections || 0)} detail="Defekte und überfällige Prüfungen" color="var(--color-error)" />
+            <PulseRow icon={Building2} label="Beschaffungsalarme" value={(procurement.pendingApprovals || 0) + (procurement.triggeredAlerts || 0)} detail={`${formatEuroCents(procurement.savings?.cents)} dokumentierte Ersparnis`} color="var(--color-warning)" />
           </div>
         </div>
       </section>

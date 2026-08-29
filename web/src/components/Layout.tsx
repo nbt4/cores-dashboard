@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppConfig } from '../hooks/useAppConfig';
 import { useBranding } from '../hooks/useBranding';
+import { suiteGreetingName } from '../lib/cores-design';
 
 const ADMIN_SECTIONS = [
   { label: 'Stammdaten', items: [
@@ -126,7 +127,7 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
           </div>
           {expanded && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm truncate">{user?.username}</p>
+              <p className="text-sm truncate">{suiteGreetingName(user)}</p>
               <p className="text-xs text-gray-600">Sicherheit & Passkeys</p>
             </div>
           )}
@@ -186,7 +187,7 @@ export function Layout({ children }: { children: ReactNode }) {
       {/* ── DESKTOP sidebar ────────────────────────────────── */}
       <aside
         className={`hidden md:flex flex-col fixed top-0 left-0 h-full z-20 transition-all duration-200 bg-dark-100 border-r border-white/5
-          ${desktopExpanded ? 'w-56' : 'w-20'}`}
+          ${desktopExpanded ? 'w-64' : 'w-20'}`}
       >
         {/* Collapse toggle */}
         <button
@@ -202,8 +203,8 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* ── Main content ───────────────────────────────────── */}
       <main className={`mobile-app-main flex-1 min-w-0 pt-14 md:pt-0 transition-all duration-200
-        ${desktopExpanded ? 'md:ml-56' : 'md:ml-20'}`}>
-        <div className="mobile-app-content p-4 md:p-6 max-w-7xl mx-auto">
+        ${desktopExpanded ? 'md:ml-64' : 'md:ml-20'}`}>
+        <div className="mobile-app-content suite-page p-4 md:p-6">
           {children}
         </div>
       </main>

@@ -1,5 +1,11 @@
 # Cores Dashboard
 
+## Einheitliches Cores Designsystem
+
+Das Dashboard verwendet das verbindliche suite-weite Designsystem aus [`nbt4/cores`](https://github.com/nbt4/cores/blob/main/docs/DESIGN_SYSTEM.md). `web/src/cores-theme.css` und `web/src/lib/cores-design.ts` sind aus dem Umbrella-Repository generiert und dürfen nicht direkt bearbeitet werden. Änderungen erfolgen an den kanonischen Quellen unter `cores/theme/`, anschließend über `./scripts/sync-design-system.sh` und `./scripts/check-design-system.sh`.
+
+Dashboard, Administration und Shell verwenden dieselbe Inter-Typografie, Palette, 256/80-px-Sidebar, Tabellen-, Formular-, Dropdown- und Scrollbarregeln wie alle anderen Cores. Die Begrüßung nutzt den zentralen Profil-Anzeigenamen und `suiteGreeting()`.
+
 **Zentrales Dashboard und Single Entrypoint für das Cores-Ökosystem — intelligente Verknüpfung und einheitliche Oberfläche für RentalCore, WarehouseCore und Plannercore.**
 
 ---

@@ -4,6 +4,7 @@ import { api } from '../lib/api';
 interface AuthUser {
   user_id: number;
   username: string;
+  display_name?: string;
   is_admin: boolean;
 }
 
@@ -29,8 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (username: string, password: string) => {
     const r = await api.post('/auth/login', { username, password });
-    const data = r.data as { username: string; is_admin: boolean; user_id?: number };
-    setUser({ user_id: data.user_id ?? 0, username: data.username, is_admin: data.is_admin });
+    const data = r.data as { username: string; display_name?: string; is_admin: boolean; user_id?: number };
+    setUser({ user_id: data.user_id ?? 0, username: data.username, display_name: data.display_name, is_admin: data.is_admin });
   };
 
   const logout = async () => {

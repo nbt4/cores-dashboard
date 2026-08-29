@@ -95,6 +95,7 @@ func (h *AuthHandler) issueLogin(w http.ResponseWriter, user models.User) {
 		"success":               true,
 		"user_id":               user.UserID,
 		"username":              user.Username,
+		"display_name":          h.displayName(user.UserID, user.Username),
 		"is_admin":              user.IsAdmin,
 		"force_password_change": user.ForcePassword,
 	})
@@ -263,10 +264,25 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	claims, _ := commonjwt.GetClaims(r)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"user_id":  claims.UserID,
-		"username": claims.Username,
-		"is_admin": claims.IsAdmin,
+		"user_id":      claims.UserID,
+		"username":     claims.Username,
+		"display_name": h.displayName(claims.UserID, claims.Username),
+		"is_admin":     claims.IsAdmin,
 	})
+}
+
+func (h *AuthHandler) displayName(userID uint, fallback string) string {
+	var displayName string
+	err := h.db.Raw(`SELECT COALESCE(
+		NULLIF(p.display_name, ''),
+		NULLIF(TRIM(CONCAT_WS(' ', u.first_name, u.last_name)), ''),
+		u.username
+	) FROM users u LEFT JOIN user_profiles p ON p.user_id = u.userid WHERE u.userid = ?`, userID).
+		Scan(&displayName).Error
+	if err != nil || strings.TrimSpace(displayName) == "" {
+		return fallback
+	}
+	return displayName
 }
 
 func jsonError(w http.ResponseWriter, msg string, code int) {
