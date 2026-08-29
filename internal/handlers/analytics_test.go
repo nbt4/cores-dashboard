@@ -53,3 +53,20 @@ func TestFetchMapReportsUnavailableUpstream(t *testing.T) {
 		t.Fatalf("error = %v, want unavailable", result["error"])
 	}
 }
+
+func TestFetchRentalUsesRevenueRoute(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/analytics/revenue" || r.URL.Query().Get("period") != "30days" {
+			t.Fatalf("unexpected rental request %q?%s", r.URL.Path, r.URL.RawQuery)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"totalRevenue":1250,"totalJobs":4}`))
+	}))
+	defer server.Close()
+
+	handler := NewAnalyticsHandler(&config.Config{RentalCoreURL: server.URL}, nil)
+	result := handler.fetchRental(t.Context(), "token")
+	if result["totalRevenue"] != float64(1250) || result["totalJobs"] != float64(4) {
+		t.Fatalf("unexpected rental summary: %#v", result)
+	}
+}

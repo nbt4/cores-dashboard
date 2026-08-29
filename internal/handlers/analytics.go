@@ -90,7 +90,7 @@ func (h *AnalyticsHandler) Summary(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AnalyticsHandler) fetchRental(ctx context.Context, token string) map[string]any {
-	return h.fetchMap(ctx, h.cfg.RentalCoreURL+"/api/v1/analytics/revenue?period=30days", token, "rental")
+	return h.fetchMap(ctx, h.cfg.RentalCoreURL+"/analytics/revenue?period=30days", token, "rental")
 }
 
 func (h *AnalyticsHandler) fetchWarehouse(ctx context.Context, token string) map[string]any {
