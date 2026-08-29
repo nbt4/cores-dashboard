@@ -11,6 +11,7 @@ import (
 // Handler manages reverse-proxy routes to backend Cores services.
 type Handler struct {
 	rentalProxy    *httputil.ReverseProxy
+	rentalAppProxy *httputil.ReverseProxy
 	warehouseProxy *httputil.ReverseProxy
 	plannerProxy   *httputil.ReverseProxy
 }
@@ -19,9 +20,27 @@ type Handler struct {
 func NewHandler(rentalURL, warehouseURL, plannerURL string) *Handler {
 	return &Handler{
 		rentalProxy:    newReverseProxy(rentalURL, "/api/v1/rental"),
+		rentalAppProxy: newMountedReverseProxy(rentalURL, "/rental"),
 		warehouseProxy: newReverseProxy(warehouseURL, "/api/v1/warehouse"),
 		plannerProxy:   newReverseProxy(plannerURL, "/api/v1/planner"),
 	}
+}
+
+func newMountedReverseProxy(targetURL, mountPath string) *httputil.ReverseProxy {
+	proxy := newReverseProxy(targetURL, mountPath)
+	originalDirector := proxy.Director
+	proxy.Director = func(req *http.Request) {
+		originalDirector(req)
+		req.Header.Set("X-Forwarded-Prefix", mountPath)
+	}
+	proxy.ModifyResponse = func(resp *http.Response) error {
+		location := resp.Header.Get("Location")
+		if strings.HasPrefix(location, "/") && !strings.HasPrefix(location, mountPath+"/") {
+			resp.Header.Set("Location", mountPath+location)
+		}
+		return nil
+	}
+	return proxy
 }
 
 // newReverseProxy creates an httputil.ReverseProxy that strips the given prefix
@@ -72,6 +91,12 @@ func newReverseProxy(targetURL, stripPrefix string) *httputil.ReverseProxy {
 // RentalProxy returns http.Handler for /api/v1/rental/* → rentalcore
 func (h *Handler) RentalProxy() http.Handler {
 	return h.rentalProxy
+}
+
+// RentalAppProxy serves the RentalCore application below /rental/ so it stays
+// inside the installed Cores PWA's same-origin navigation scope.
+func (h *Handler) RentalAppProxy() http.Handler {
+	return h.rentalAppProxy
 }
 
 // WarehouseProxy returns http.Handler for /api/v1/warehouse/* → warehousecore

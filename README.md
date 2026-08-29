@@ -15,14 +15,14 @@ Dashboard, Administration und Shell verwenden dieselbe Inter-Typografie, Palette
 - **Single Sign-On (SSO)** — Einmal anmelden, alle Cores-Services nutzen. Zentrales Login/Logout mit JWT-basiertem Session-Management
 - **Microsoft Entra Identity** — Umschaltbare lokale, Microsoft- oder hybride Benutzerquelle mit gruppenbasierter Synchronisation und Microsoft-Login
 - **Zentrale Microsoft-App** — Eine App-Registrierung für Entra-Benutzer, Cores-Login sowie RentalCore-Kontakt-/Kalenderfunktionen; inklusive Einrichtungs- und Rechtehilfe im Dashboard
-- **Reverse Proxy** — Transparentes Durchreichen von API-Requests an RentalCore, WarehouseCore und Plannercore. Plannercore-SPA nahtlos eingebettet unter `/planner/`
+- **Reverse Proxy** — Transparentes Durchreichen von API-Requests an RentalCore, WarehouseCore und Plannercore. RentalCore und Plannercore sind nahtlos unter `/rental/` bzw. `/planner/` eingebettet
 - **Live-Operations-Cockpit** — Handlungsorientiertes Lagebild aus allen Cores-Services mit priorisierten Vorgängen, Umsatz, aktiven Jobs, Lagerbereitschaft, persönlichen Planner-Aufgaben, Beschaffungsfreigaben und direktem Einstieg in den zuständigen Arbeitsbereich
 - **Plattformgesundheit** — Parallele Healthchecks für alle fünf Cores-Dienste und PostgreSQL inklusive Versionen und Antwortzeiten; gestörte Komponenten erscheinen unmittelbar im Handlungsbedarf
 - **Branding & Theming** — Dynamisches Whitelabeling: eigenes Logo, Firmenname und Favicon pro Tenant. Upload über die Admin-Oberfläche
 - **Cross-Service Navigation** — Einheitliche Navbar mit direkten Links zu allen Sub-Services
 - **Config API** — Öffentlicher Endpoint liefert alle Cross-Links und Branding-Daten für clientseitige Integration
 - **Statisches Embedding** — Frontend (React/Vite) und Backend (Go) in einem Binary via `embed`. Keine separaten Assets nötig
-- **Installierbare Mobile-App (PWA)** — Eigenes Homescreen-Icon, Standalone-Modus, Safe-Area-Unterstützung und touchoptimierte Navigation für iPhone, iPad und Android
+- **Installierbare Mobile-App (PWA)** — Eigenes Homescreen-Icon, Standalone-Modus, Safe-Area-Unterstützung und touchoptimierte Navigation für iPhone, iPad und Android; RentalCore bleibt beim Wechsel innerhalb derselben Origin und damit ohne iOS-In-App-Browserleiste
 - **Einheitliche App-Shell** — Produktlogo nur in der ein-/ausklappbaren Sidebar (176 × 48 px bzw. 40 × 40 px), logofreie Header und ein reines Produkt-Favicon im Browser-Tab
 
 ### Branding
@@ -140,6 +140,7 @@ Funktionen ohnehin die Live-APIs benötigt.
 | `*`      | `/api/v1/proxy/warehouse/*`       | Proxy zu WarehouseCore (🔒)                  |
 | `*`      | `/api/v1/proxy/planner/*`         | Proxy zu Plannercore (🔒)                    |
 | `*`      | `/api/v1/planner/*`               | Proxy zu Plannercore (🔒)                    |
+| `GET/*`  | `/rental/`                        | RentalCore SPA und API (eingebettet)         |
 | `GET`    | `/planner/`                       | Plannercore SPA (eingebettet, öffentlich)    |
 
 🔒 = Authentifizierung via `session_id` Cookie erforderlich
@@ -181,6 +182,7 @@ Referenzen: [Gruppenmitglieder lesen](https://learn.microsoft.com/en-us/graph/ap
 ```text
 Browser ────► cores-dashboard (:8080)
                   │
+                  ├──► /rental/*                ──► rentalcore    (:8081)
                   ├──► /api/v1/proxy/rental/*    ──► rentalcore    (:8081)
                   ├──► /api/v1/proxy/warehouse/* ──► warehousecore (:8082)
                   └──► /api/v1/planner/*         ──► plannercore   (:8080 intern)

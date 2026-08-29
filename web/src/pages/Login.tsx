@@ -23,11 +23,13 @@ export function Login() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     setError('');
     setLoading(true);
     try {
       await login(username, password);
-      navigate('/');
+      navigate('/', { replace: true });
+      window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0 }));
     } catch {
       setError('Ungültige Anmeldedaten');
     } finally {
@@ -73,7 +75,7 @@ export function Login() {
               onChange={e => setUsername(e.target.value)}
               className="w-full px-4 py-3 rounded-lg"
               required
-              autoFocus
+              autoFocus={!window.matchMedia('(max-width: 767px) and (pointer: coarse)').matches}
             />
             <input
               type="password"

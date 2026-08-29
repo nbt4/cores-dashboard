@@ -99,14 +99,14 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
 				"service": "cores-dashboard",
-				"version": "1.14.24",
+				"version": "1.14.25",
 			})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "ok",
 			"service": "cores-dashboard",
-			"version": "1.14.24",
+			"version": "1.14.25",
 		})
 	})
 
@@ -193,6 +193,13 @@ func main() {
 	mux.HandleFunc("/planner/", proxyHandler.ProxyPlannerSpa)
 	mux.HandleFunc("/planner", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/planner/", http.StatusMovedPermanently)
+	})
+
+	// RentalCore SPA proxy (public — RentalCore enforces authentication). Keeping
+	// the suite below one origin prevents iOS from opening an out-of-scope browser.
+	mux.Handle("/rental/", gatewayProxy.RentalAppProxy())
+	mux.HandleFunc("/rental", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/rental/", http.StatusMovedPermanently)
 	})
 
 	// ProcurementCore is an independent service and must not be exposed below
