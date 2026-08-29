@@ -9,6 +9,7 @@ export interface BrandingInfo {
 }
 
 interface AppConfig {
+	routingMode: 'paths' | 'subdomains';
   rentalUrl: string;
   warehouseUrl: string;
   plannerUrl: string;

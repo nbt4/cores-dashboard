@@ -15,14 +15,14 @@ Dashboard, Administration und Shell verwenden dieselbe Inter-Typografie, Palette
 - **Single Sign-On (SSO)** — Einmal anmelden, alle Cores-Services nutzen. Zentrales Login/Logout mit JWT-basiertem Session-Management
 - **Microsoft Entra Identity** — Umschaltbare lokale, Microsoft- oder hybride Benutzerquelle mit gruppenbasierter Synchronisation und Microsoft-Login
 - **Zentrale Microsoft-App** — Eine App-Registrierung für Entra-Benutzer, Cores-Login sowie RentalCore-Kontakt-/Kalenderfunktionen; inklusive Einrichtungs- und Rechtehilfe im Dashboard
-- **Reverse Proxy** — Transparentes Durchreichen von API-Requests an RentalCore, WarehouseCore und Plannercore. RentalCore und Plannercore sind nahtlos unter `/rental/` bzw. `/planner/` eingebettet
+- **Globales Routing** — Ein Schalter legt suiteweit entweder die Pfade `/rentalcore/`, `/warehousecore/`, `/plannercore/` und `/procurementcore/` oder eigene Subdomains fest; Mischbetrieb ist ausgeschlossen
 - **Live-Operations-Cockpit** — Handlungsorientiertes Lagebild aus allen Cores-Services mit priorisierten Vorgängen, Umsatz, aktiven Jobs, Lagerbereitschaft, persönlichen Planner-Aufgaben, Beschaffungsfreigaben und direktem Einstieg in den zuständigen Arbeitsbereich
 - **Plattformgesundheit** — Parallele Healthchecks für alle fünf Cores-Dienste und PostgreSQL inklusive Versionen und Antwortzeiten; gestörte Komponenten erscheinen unmittelbar im Handlungsbedarf
 - **Branding & Theming** — Dynamisches Whitelabeling: eigenes Logo, Firmenname und Favicon pro Tenant. Upload über die Admin-Oberfläche
 - **Cross-Service Navigation** — Einheitliche Navbar mit direkten Links zu allen Sub-Services
 - **Config API** — Öffentlicher Endpoint liefert alle Cross-Links und Branding-Daten für clientseitige Integration
 - **Statisches Embedding** — Frontend (React/Vite) und Backend (Go) in einem Binary via `embed`. Keine separaten Assets nötig
-- **Installierbare Mobile-App (PWA)** — Eigenes Homescreen-Icon, Standalone-Modus, Safe-Area-Unterstützung und touchoptimierte Navigation für iPhone, iPad und Android; RentalCore bleibt beim Wechsel innerhalb derselben Origin und damit ohne iOS-In-App-Browserleiste
+- **Installierbare Mobile-App (PWA)** — Eigenes Homescreen-Icon, Standalone-Modus, Safe-Area-Unterstützung und touchoptimierte Navigation für iPhone, iPad und Android; im Pfadmodus bleiben alle Cores beim Wechsel innerhalb derselben Origin und damit ohne iOS-In-App-Browserleiste
 - **Einheitliche App-Shell** — Produktlogo nur in der ein-/ausklappbaren Sidebar (176 × 48 px bzw. 40 × 40 px), logofreie Header und ein reines Produkt-Favicon im Browser-Tab
 
 ### Branding
@@ -140,8 +140,10 @@ Funktionen ohnehin die Live-APIs benötigt.
 | `*`      | `/api/v1/proxy/warehouse/*`       | Proxy zu WarehouseCore (🔒)                  |
 | `*`      | `/api/v1/proxy/planner/*`         | Proxy zu Plannercore (🔒)                    |
 | `*`      | `/api/v1/planner/*`               | Proxy zu Plannercore (🔒)                    |
-| `GET/*`  | `/rental/`                        | RentalCore SPA und API (eingebettet)         |
-| `GET`    | `/planner/`                       | Plannercore SPA (eingebettet, öffentlich)    |
+| `GET/*`  | `/rentalcore/`                    | RentalCore SPA und API im Pfadmodus           |
+| `GET/*`  | `/warehousecore/`                 | WarehouseCore SPA und API im Pfadmodus        |
+| `GET/*`  | `/plannercore/`                   | PlannerCore SPA und API im Pfadmodus          |
+| `GET/*`  | `/procurementcore/`               | ProcurementCore SPA und API im Pfadmodus      |
 
 🔒 = Authentifizierung via `session_id` Cookie erforderlich
 
@@ -160,7 +162,8 @@ Referenzen: [Gruppenmitglieder lesen](https://learn.microsoft.com/en-us/graph/ap
 | Variable                 | Beschreibung                                    | Standard                 |
 |--------------------------|-------------------------------------------------|--------------------------|
 | `PORT`                   | Server-Port                                     | `8080`                   |
-| `CORES_JWT_SECRET`       | JWT-Secret (muss mit allen Cores identisch sein)| `dev-secret-change-me`   |
+| `CORES_JWT_SECRET`       | JWT-Secret (muss mit allen Cores identisch sein)| erforderlich             |
+| `CORES_ROUTING_MODE`     | Global `paths` oder `subdomains`                | `paths`                  |
 | `DB_HOST`                | PostgreSQL-Host                                 | `localhost`              |
 | `DB_PORT`                | PostgreSQL-Port                                 | `5432`                   |
 | `DB_NAME`                | Datenbank-Name                                  | `rentalcore`             |
@@ -170,9 +173,11 @@ Referenzen: [Gruppenmitglieder lesen](https://learn.microsoft.com/en-us/graph/ap
 | `RENTALCORE_URL`         | Interne URL zu RentalCore                       | `http://localhost:8081`  |
 | `WAREHOUSECORE_URL`      | Interne URL zu WarehouseCore                    | `http://localhost:8082`  |
 | `PLANNERCORE_URL`        | Interne URL zu Plannercore                      | `http://plannercore:8080`|
-| `RENTAL_PUBLIC_URL`      | Öffentliche RentalCore-URL (für Cross-Links)    | –                        |
-| `WAREHOUSE_PUBLIC_URL`   | Öffentliche WarehouseCore-URL (für Cross-Links) | –                        |
-| `PLANNERCORE_PUBLIC_URL` | Öffentliche Plannercore-URL (für Cross-Links)   | `/planner/`              |
+| `PROCUREMENTCORE_URL`    | Interne URL zu ProcurementCore                  | `http://procurementcore:8084` |
+| `RENTALCORE_PUBLIC_URL`  | RentalCore-URL im Subdomainmodus                | –                        |
+| `WAREHOUSECORE_PUBLIC_URL` | WarehouseCore-URL im Subdomainmodus           | –                        |
+| `PLANNERCORE_PUBLIC_URL` | PlannerCore-URL im Subdomainmodus               | –                        |
+| `PROCUREMENTCORE_PUBLIC_URL` | ProcurementCore-URL im Subdomainmodus       | –                        |
 | `COOKIE_DOMAIN`          | Cookie-Domain für SSO                           | –                        |
 
 ---
@@ -182,10 +187,10 @@ Referenzen: [Gruppenmitglieder lesen](https://learn.microsoft.com/en-us/graph/ap
 ```text
 Browser ────► cores-dashboard (:8080)
                   │
-                  ├──► /rental/*                ──► rentalcore    (:8081)
-                  ├──► /api/v1/proxy/rental/*    ──► rentalcore    (:8081)
-                  ├──► /api/v1/proxy/warehouse/* ──► warehousecore (:8082)
-                  └──► /api/v1/planner/*         ──► plannercore   (:8080 intern)
+                  ├──► /rentalcore/*      ──► rentalcore      (:8081)
+                  ├──► /warehousecore/*   ──► warehousecore   (:8082)
+                  ├──► /plannercore/*     ──► plannercore     (:8080 intern)
+                  └──► /procurementcore/* ──► procurementcore (:8084)
 ```
 
 ---

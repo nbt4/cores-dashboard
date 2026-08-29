@@ -64,7 +64,7 @@ func main() {
 	auditLogger := audit.NewAuditLogger(sqlDB)
 
 	// API Gateway proxy
-	gatewayProxy := proxy.NewHandler(cfg.RentalCoreURL, cfg.WarehouseCoreURL, cfg.PlannercoreURL)
+	gatewayProxy := proxy.NewHandler(cfg.RentalCoreURL, cfg.WarehouseCoreURL, cfg.PlannercoreURL, cfg.ProcurementCoreURL)
 	proxyHandler := handlers.NewAdminProxyHandler(cfg)
 
 	// requireAdmin wrapper
@@ -99,14 +99,14 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
 				"service": "cores-dashboard",
-				"version": "1.14.25",
+				"version": "1.14.26",
 			})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "ok",
 			"service": "cores-dashboard",
-			"version": "1.14.25",
+			"version": "1.14.26",
 		})
 	})
 
@@ -185,27 +185,48 @@ func main() {
 	mux.Handle("/api/v1/analytics/", protected)
 	mux.Handle("/api/v1/proxy/", adminProtected)
 	mux.Handle("/api/v1/admin/", adminProtected)
-	// Planner branding is public so the mounted /planner SPA can resolve its
+	// Planner branding is public so the mounted PlannerCore SPA can resolve its
 	// own product assets instead of inheriting the dashboard branding.
 	mux.HandleFunc("/api/v1/planner/branding", proxyHandler.ProxyPlanner)
 
-	// Plannercore SPA proxy (public — auth handled by Plannercore itself)
-	mux.HandleFunc("/planner/", proxyHandler.ProxyPlannerSpa)
-	mux.HandleFunc("/planner", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/planner/", http.StatusMovedPermanently)
-	})
+	appMounts := []struct {
+		path    string
+		handler http.Handler
+	}{
+		{path: "/rentalcore", handler: gatewayProxy.RentalAppProxy()},
+		{path: "/warehousecore", handler: gatewayProxy.WarehouseAppProxy()},
+		{path: "/plannercore", handler: gatewayProxy.PlannerAppProxy()},
+		{path: "/procurementcore", handler: gatewayProxy.ProcurementAppProxy()},
+	}
+	for _, mount := range appMounts {
+		mount := mount
+		if cfg.RoutingMode == "paths" {
+			mux.Handle(mount.path+"/", mount.handler)
+			mux.HandleFunc(mount.path, func(w http.ResponseWriter, r *http.Request) {
+				http.Redirect(w, r, mount.path+"/", http.StatusMovedPermanently)
+			})
+		} else {
+			mux.HandleFunc(mount.path, http.NotFound)
+			mux.HandleFunc(mount.path+"/", http.NotFound)
+		}
+	}
+	if cfg.RoutingMode == "paths" {
+		// Preserve installed shortcuts from the earlier path names.
+		mux.HandleFunc("/rental", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/rentalcore/", http.StatusMovedPermanently)
+		})
+		mux.HandleFunc("/rental/", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/rentalcore/", http.StatusMovedPermanently)
+		})
+		mux.HandleFunc("/planner", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/plannercore/", http.StatusMovedPermanently)
+		})
+		mux.HandleFunc("/planner/", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/plannercore/", http.StatusMovedPermanently)
+		})
+	}
 
-	// RentalCore SPA proxy (public — RentalCore enforces authentication). Keeping
-	// the suite below one origin prevents iOS from opening an out-of-scope browser.
-	mux.Handle("/rental/", gatewayProxy.RentalAppProxy())
-	mux.HandleFunc("/rental", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/rental/", http.StatusMovedPermanently)
-	})
-
-	// ProcurementCore is an independent service and must not be exposed below
-	// the dashboard host. Keep explicit guards ahead of the SPA fallback.
-	mux.HandleFunc("/procurement", http.NotFound)
-	mux.HandleFunc("/procurement/", http.NotFound)
+	// Keep an explicit guard ahead of the dashboard SPA fallback.
 	mux.HandleFunc("/api/v1/procurement", http.NotFound)
 	mux.HandleFunc("/api/v1/procurement/", http.NotFound)
 

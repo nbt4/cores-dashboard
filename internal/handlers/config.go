@@ -10,14 +10,32 @@ import (
 	"coresdashboard/internal/models"
 )
 
+func publicServiceURLs(cfg *config.Config) map[string]string {
+	if cfg.RoutingMode == "paths" {
+		return map[string]string{
+			"rentalUrl":      "/rentalcore/",
+			"warehouseUrl":   "/warehousecore/",
+			"plannerUrl":     "/plannercore/",
+			"procurementUrl": "/procurementcore/",
+		}
+	}
+	return map[string]string{
+		"rentalUrl":      cfg.RentalPublicURL,
+		"warehouseUrl":   cfg.WarehousePublicURL,
+		"plannerUrl":     cfg.PlannercorePublicURL,
+		"procurementUrl": cfg.ProcurementPublicURL,
+	}
+}
+
 func ConfigHandler(cfg *config.Config, db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		serviceURLs := publicServiceURLs(cfg)
 		payload := map[string]interface{}{
-			"rentalUrl":       "/rental/",
-			"rentalDirectUrl": cfg.RentalPublicURL,
-			"warehouseUrl":    cfg.WarehousePublicURL,
-			"plannerUrl":      cfg.PlannercorePublicURL,
-			"procurementUrl":  cfg.ProcurementPublicURL,
+			"routingMode":    cfg.RoutingMode,
+			"rentalUrl":      serviceURLs["rentalUrl"],
+			"warehouseUrl":   serviceURLs["warehouseUrl"],
+			"plannerUrl":     serviceURLs["plannerUrl"],
+			"procurementUrl": serviceURLs["procurementUrl"],
 		}
 
 		// Include branding basics if available

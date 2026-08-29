@@ -10,19 +10,25 @@ import (
 
 // Handler manages reverse-proxy routes to backend Cores services.
 type Handler struct {
-	rentalProxy    *httputil.ReverseProxy
-	rentalAppProxy *httputil.ReverseProxy
-	warehouseProxy *httputil.ReverseProxy
-	plannerProxy   *httputil.ReverseProxy
+	rentalProxy         *httputil.ReverseProxy
+	warehouseProxy      *httputil.ReverseProxy
+	plannerProxy        *httputil.ReverseProxy
+	rentalAppProxy      *httputil.ReverseProxy
+	warehouseAppProxy   *httputil.ReverseProxy
+	plannerAppProxy     *httputil.ReverseProxy
+	procurementAppProxy *httputil.ReverseProxy
 }
 
 // NewHandler creates reverse proxies for all backend services.
-func NewHandler(rentalURL, warehouseURL, plannerURL string) *Handler {
+func NewHandler(rentalURL, warehouseURL, plannerURL, procurementURL string) *Handler {
 	return &Handler{
-		rentalProxy:    newReverseProxy(rentalURL, "/api/v1/rental"),
-		rentalAppProxy: newMountedReverseProxy(rentalURL, "/rental"),
-		warehouseProxy: newReverseProxy(warehouseURL, "/api/v1/warehouse"),
-		plannerProxy:   newReverseProxy(plannerURL, "/api/v1/planner"),
+		rentalProxy:         newReverseProxy(rentalURL, "/api/v1/rental"),
+		warehouseProxy:      newReverseProxy(warehouseURL, "/api/v1/warehouse"),
+		plannerProxy:        newReverseProxy(plannerURL, "/api/v1/planner"),
+		rentalAppProxy:      newMountedReverseProxy(rentalURL, "/rentalcore"),
+		warehouseAppProxy:   newMountedReverseProxy(warehouseURL, "/warehousecore"),
+		plannerAppProxy:     newMountedReverseProxy(plannerURL, "/plannercore"),
+		procurementAppProxy: newMountedReverseProxy(procurementURL, "/procurementcore"),
 	}
 }
 
@@ -35,7 +41,7 @@ func newMountedReverseProxy(targetURL, mountPath string) *httputil.ReverseProxy 
 	}
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		location := resp.Header.Get("Location")
-		if strings.HasPrefix(location, "/") && !strings.HasPrefix(location, mountPath+"/") {
+		if strings.HasPrefix(location, "/") && location != mountPath && !strings.HasPrefix(location, mountPath+"/") {
 			resp.Header.Set("Location", mountPath+location)
 		}
 		return nil
@@ -93,11 +99,19 @@ func (h *Handler) RentalProxy() http.Handler {
 	return h.rentalProxy
 }
 
-// RentalAppProxy serves the RentalCore application below /rental/ so it stays
-// inside the installed Cores PWA's same-origin navigation scope.
+// RentalAppProxy serves RentalCore below the canonical same-origin suite path.
 func (h *Handler) RentalAppProxy() http.Handler {
 	return h.rentalAppProxy
 }
+
+// WarehouseAppProxy serves WarehouseCore below the canonical suite path.
+func (h *Handler) WarehouseAppProxy() http.Handler { return h.warehouseAppProxy }
+
+// PlannerAppProxy serves PlannerCore below the canonical suite path.
+func (h *Handler) PlannerAppProxy() http.Handler { return h.plannerAppProxy }
+
+// ProcurementAppProxy serves ProcurementCore below the canonical suite path.
+func (h *Handler) ProcurementAppProxy() http.Handler { return h.procurementAppProxy }
 
 // WarehouseProxy returns http.Handler for /api/v1/warehouse/* → warehousecore
 func (h *Handler) WarehouseProxy() http.Handler {
