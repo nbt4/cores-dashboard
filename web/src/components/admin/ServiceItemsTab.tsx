@@ -147,7 +147,7 @@ export function ServiceItemsTab() {
         </button>
       </div>
 
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}>
+      <div className="suite-search-field gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}>
         <Search className="w-4 h-4 text-gray-500 flex-shrink-0" />
         <input type="search" value={search} onChange={e => setSearch(e.target.value)} placeholder="Dienstleistung suchen…" className="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder:text-gray-600" />
         <button onClick={load} className="text-gray-500 hover:text-gray-300 transition-colors"><RefreshCw className="w-3.5 h-3.5" /></button>

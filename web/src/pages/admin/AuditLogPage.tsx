@@ -115,7 +115,7 @@ export function AuditLogPage() {
 
       {/* Filter bar */}
       <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-40">
+        <div className="suite-search-field flex-1 min-w-40">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           <input
             type="text"

@@ -344,7 +344,7 @@ export function ContactsTab() {
       </div>
 
       {/* Search bar */}
-      <div className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}>
+      <div className="suite-search-field gap-2 px-3 py-2 rounded-lg" style={{ background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)' }}>
         <Search className="w-4 h-4 text-gray-500 flex-shrink-0" />
         <input
           type="search"

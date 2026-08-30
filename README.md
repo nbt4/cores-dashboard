@@ -6,6 +6,8 @@ Das Dashboard verwendet das verbindliche suite-weite Designsystem aus [`nbt4/cor
 
 Dashboard, Administration und Shell verwenden dieselbe Inter-Typografie, Palette, 256/80-px-Sidebar, Tabellen-, Formular-, Dropdown- und Scrollbarregeln wie alle anderen Cores. Die Begrüßung nutzt den zentralen Profil-Anzeigenamen und `suiteGreeting()`.
 
+Alle Suchfelder im Dashboard und in der Administration verwenden das gemeinsame `suite-search-field`-Primitive mit fest reserviertem Platz für das Lupenicon.
+
 **Zentrales Dashboard und Single Entrypoint für das Cores-Ökosystem — intelligente Verknüpfung und einheitliche Oberfläche für RentalCore, WarehouseCore und Plannercore.**
 
 ---
