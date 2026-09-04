@@ -16,6 +16,7 @@ type Config struct {
 	WarehouseCoreURL     string
 	PlannercoreURL       string
 	ProcurementCoreURL   string
+	CoresMCPURL          string
 	RentalPublicURL      string
 	WarehousePublicURL   string
 	PlannercorePublicURL string
@@ -44,6 +45,7 @@ func Load() *Config {
 		WarehouseCoreURL:     commonconfig.GetEnv("WAREHOUSECORE_URL", "http://localhost:8082"),
 		PlannercoreURL:       commonconfig.GetEnv("PLANNERCORE_URL", "http://plannercore:8080"),
 		ProcurementCoreURL:   commonconfig.GetEnv("PROCUREMENTCORE_URL", "http://procurementcore:8084"),
+		CoresMCPURL:          commonconfig.GetEnv("CORES_MCP_URL", "http://cores-mcp:8090"),
 		RentalPublicURL:      commonconfig.GetEnv("RENTALCORE_PUBLIC_URL", commonconfig.GetEnv("RENTAL_PUBLIC_URL", "")),
 		WarehousePublicURL:   commonconfig.GetEnv("WAREHOUSECORE_PUBLIC_URL", commonconfig.GetEnv("WAREHOUSE_PUBLIC_URL", "")),
 		PlannercorePublicURL: commonconfig.GetEnv("PLANNERCORE_PUBLIC_URL", ""),

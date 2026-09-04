@@ -20,7 +20,7 @@ func TestAppProxiesStripMountAndForwardPrefix(t *testing.T) {
 			}))
 			defer upstream.Close()
 
-			handlerSet := NewHandler(upstream.URL, upstream.URL, upstream.URL, upstream.URL)
+			handlerSet := NewHandler(upstream.URL, upstream.URL, upstream.URL, upstream.URL, upstream.URL)
 			handlers := map[string]http.Handler{
 				"/rentalcore":      handlerSet.RentalAppProxy(),
 				"/warehousecore":   handlerSet.WarehouseAppProxy(),
@@ -46,7 +46,7 @@ func TestRentalAppProxyKeepsRedirectInsideMount(t *testing.T) {
 	}))
 	defer upstream.Close()
 
-	handler := NewHandler(upstream.URL, upstream.URL, upstream.URL, upstream.URL).RentalAppProxy()
+	handler := NewHandler(upstream.URL, upstream.URL, upstream.URL, upstream.URL, upstream.URL).RentalAppProxy()
 	request := httptest.NewRequest(http.MethodGet, "/rentalcore/private", nil)
 	response := httptest.NewRecorder()
 
@@ -54,5 +54,28 @@ func TestRentalAppProxyKeepsRedirectInsideMount(t *testing.T) {
 
 	if location := response.Header().Get("Location"); location != "/rentalcore/login" {
 		t.Fatalf("Location = %q, want %q", location, "/rentalcore/login")
+	}
+}
+
+func TestMCPProxyPreservesProtocolAndOAuthPaths(t *testing.T) {
+	for _, path := range []string{"/mcp", "/mcp/docs", "/oauth/token", "/.well-known/oauth-protected-resource/mcp"} {
+		t.Run(path, func(t *testing.T) {
+			upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.URL.Path != path {
+					t.Fatalf("upstream path = %q, want %q", r.URL.Path, path)
+				}
+				w.WriteHeader(http.StatusNoContent)
+			}))
+			defer upstream.Close()
+
+			handler := NewHandler(upstream.URL, upstream.URL, upstream.URL, upstream.URL, upstream.URL).MCPProxy()
+			request := httptest.NewRequest(http.MethodGet, path, nil)
+			response := httptest.NewRecorder()
+			handler.ServeHTTP(response, request)
+
+			if response.Code != http.StatusNoContent {
+				t.Fatalf("status = %d, want %d", response.Code, http.StatusNoContent)
+			}
+		})
 	}
 }

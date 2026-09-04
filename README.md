@@ -1,5 +1,7 @@
 # Cores Dashboard
 
+Das Dashboard veröffentlicht außerdem den eigenständigen, rein lesenden Cores-MCP-Dienst unter `/mcp` und leitet dessen OAuth- sowie Discovery-Endpunkte unverändert weiter. Dadurch können ChatGPT, Claude und andere MCP-Clients den bestehenden Cores-Login auf derselben öffentlichen Domain verwenden. Das interne Ziel wird mit `CORES_MCP_URL` konfiguriert (Standard: `http://cores-mcp:8090`).
+
 ## Einheitliches Cores Designsystem
 
 Das Dashboard verwendet das verbindliche suite-weite Designsystem aus [`nbt4/cores`](https://github.com/nbt4/cores/blob/main/docs/DESIGN_SYSTEM.md). `web/src/cores-theme.css` und `web/src/lib/cores-design.ts` sind aus dem Umbrella-Repository generiert und dürfen nicht direkt bearbeitet werden. Änderungen erfolgen an den kanonischen Quellen unter `cores/theme/`, anschließend über `./scripts/sync-design-system.sh` und `./scripts/check-design-system.sh`.

@@ -17,10 +17,11 @@ type Handler struct {
 	warehouseAppProxy   *httputil.ReverseProxy
 	plannerAppProxy     *httputil.ReverseProxy
 	procurementAppProxy *httputil.ReverseProxy
+	mcpProxy            *httputil.ReverseProxy
 }
 
 // NewHandler creates reverse proxies for all backend services.
-func NewHandler(rentalURL, warehouseURL, plannerURL, procurementURL string) *Handler {
+func NewHandler(rentalURL, warehouseURL, plannerURL, procurementURL, mcpURL string) *Handler {
 	return &Handler{
 		rentalProxy:         newReverseProxy(rentalURL, "/api/v1/rental"),
 		warehouseProxy:      newReverseProxy(warehouseURL, "/api/v1/warehouse"),
@@ -29,6 +30,7 @@ func NewHandler(rentalURL, warehouseURL, plannerURL, procurementURL string) *Han
 		warehouseAppProxy:   newMountedReverseProxy(warehouseURL, "/warehousecore"),
 		plannerAppProxy:     newMountedReverseProxy(plannerURL, "/plannercore"),
 		procurementAppProxy: newMountedReverseProxy(procurementURL, "/procurementcore"),
+		mcpProxy:            newReverseProxy(mcpURL, ""),
 	}
 }
 
@@ -112,6 +114,9 @@ func (h *Handler) PlannerAppProxy() http.Handler { return h.plannerAppProxy }
 
 // ProcurementAppProxy serves ProcurementCore below the canonical suite path.
 func (h *Handler) ProcurementAppProxy() http.Handler { return h.procurementAppProxy }
+
+// MCPProxy preserves MCP and OAuth paths while forwarding them to Cores MCP.
+func (h *Handler) MCPProxy() http.Handler { return h.mcpProxy }
 
 // WarehouseProxy returns http.Handler for /api/v1/warehouse/* → warehousecore
 func (h *Handler) WarehouseProxy() http.Handler {

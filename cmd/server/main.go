@@ -64,7 +64,7 @@ func main() {
 	auditLogger := audit.NewAuditLogger(sqlDB)
 
 	// API Gateway proxy
-	gatewayProxy := proxy.NewHandler(cfg.RentalCoreURL, cfg.WarehouseCoreURL, cfg.PlannercoreURL, cfg.ProcurementCoreURL)
+	gatewayProxy := proxy.NewHandler(cfg.RentalCoreURL, cfg.WarehouseCoreURL, cfg.PlannercoreURL, cfg.ProcurementCoreURL, cfg.CoresMCPURL)
 	proxyHandler := handlers.NewAdminProxyHandler(cfg)
 
 	// requireAdmin wrapper
@@ -73,6 +73,17 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+
+	// MCP performs its own OAuth authorization. These public protocol routes must
+	// reach it without the dashboard's API middleware changing request bodies,
+	// streaming responses, callback paths or WWW-Authenticate headers.
+	for _, pattern := range []string{
+		"/mcp", "/mcp/", "/oauth/",
+		"/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp",
+		"/.well-known/oauth-authorization-server", "/.well-known/openid-configuration",
+	} {
+		mux.Handle(pattern, gatewayProxy.MCPProxy())
+	}
 
 	// Prometheus metrics endpoint
 	mux.Handle("GET /metrics", promhttp.Handler())
@@ -99,14 +110,14 @@ func main() {
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
 				"service": "cores-dashboard",
-				"version": "1.14.28",
+				"version": "1.14.29",
 			})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "ok",
 			"service": "cores-dashboard",
-			"version": "1.14.28",
+			"version": "1.14.29",
 		})
 	})
 
