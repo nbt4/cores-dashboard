@@ -1,12 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useBranding } from '../hooks/useBranding';
 import { api } from '../lib/api';
 
 export function Login() {
   const { login } = useAuth();
-  const navigate = useNavigate();
   const branding = useBranding();
   const [searchParams] = useSearchParams();
   const [username, setUsername] = useState('');
@@ -14,6 +13,7 @@ export function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [methods, setMethods] = useState({ localEnabled: true, microsoftEnabled: false });
+  const redirect = searchParams.get('redirect') || '/';
 
   useEffect(() => {
     const callbackError = searchParams.get('error');
@@ -27,9 +27,8 @@ export function Login() {
     setError('');
     setLoading(true);
     try {
-      await login(username, password);
-      navigate('/', { replace: true });
-      window.requestAnimationFrame(() => window.scrollTo({ top: 0, left: 0 }));
+      const destination = await login(username, password, redirect);
+      window.location.assign(destination);
     } catch {
       setError('Ungültige Anmeldedaten');
     } finally {
@@ -57,7 +56,10 @@ export function Login() {
             {(branding.brandName || branding.companyName !== branding.productName) && <p className="text-gray-500 text-xs">by {branding.brandName || branding.companyName}</p>}
           </div>
 
-          {methods.microsoftEnabled && <button type="button" onClick={() => { window.location.href = '/api/v1/auth/microsoft/start'; }}
+          {methods.microsoftEnabled && <button type="button" onClick={() => {
+            const params = new URLSearchParams({ redirect });
+            window.location.href = `/api/v1/auth/microsoft/start?${params.toString()}`;
+          }}
             className="w-full py-3 px-4 rounded-lg font-semibold text-white transition-all flex items-center justify-center gap-3 border border-white/15 hover:bg-white/5">
             <span className="grid grid-cols-2 gap-[2px] w-4 h-4" aria-hidden="true">
               <span className="bg-[#f25022]" /><span className="bg-[#7fba00]" /><span className="bg-[#00a4ef]" /><span className="bg-[#ffb900]" />

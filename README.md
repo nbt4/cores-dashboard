@@ -17,6 +17,7 @@ Alle Suchfelder im Dashboard und in der Administration verwenden das gemeinsame 
 ## Features
 
 - **Single Sign-On (SSO)** — Einmal anmelden, alle Cores-Services nutzen. Zentrales Login/Logout mit JWT-basiertem Session-Management
+- **Sicherer Rücksprung** — Core- und MCP-Aufrufe verwenden dasselbe Loginfenster; lokale und Microsoft-Anmeldung kehren nur zu validierten Suite-Zielen zurück
 - **Microsoft Entra Identity** — Umschaltbare lokale, Microsoft- oder hybride Benutzerquelle mit gruppenbasierter Synchronisation und Microsoft-Login
 - **Zentrale Microsoft-App** — Eine App-Registrierung für Entra-Benutzer, Cores-Login sowie RentalCore-Kontakt-/Kalenderfunktionen; inklusive Einrichtungs- und Rechtehilfe im Dashboard
 - **Globales Routing** — Ein Schalter legt suiteweit entweder die Pfade `/rentalcore/`, `/warehousecore/`, `/plannercore/` und `/procurementcore/` oder eigene Subdomains fest; Mischbetrieb ist ausgeschlossen

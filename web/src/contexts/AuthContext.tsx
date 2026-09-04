@@ -11,7 +11,7 @@ interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string, redirect?: string) => Promise<string>;
   logout: () => Promise<void>;
 }
 
@@ -28,10 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (username: string, password: string) => {
-    const r = await api.post('/auth/login', { username, password });
-    const data = r.data as { username: string; display_name?: string; is_admin: boolean; user_id?: number };
+  const login = async (username: string, password: string, redirect = '/') => {
+    const r = await api.post('/auth/login', { username, password, redirect });
+    const data = r.data as { username: string; display_name?: string; is_admin: boolean; user_id?: number; redirect?: string };
     setUser({ user_id: data.user_id ?? 0, username: data.username, display_name: data.display_name, is_admin: data.is_admin });
+    return data.redirect || '/';
   };
 
   const logout = async () => {

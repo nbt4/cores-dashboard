@@ -44,6 +44,7 @@ func NewAuthHandler(cfg *config.Config, db *gorm.DB, ms ...*microsoft.Service) *
 type loginRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+	Redirect string `json:"redirect"`
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -82,10 +83,10 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.issueLogin(w, user)
+	h.issueLogin(w, r, user, req.Redirect)
 }
 
-func (h *AuthHandler) issueLogin(w http.ResponseWriter, user models.User) {
+func (h *AuthHandler) issueLogin(w http.ResponseWriter, r *http.Request, user models.User, redirect string) {
 	if err := h.setSessionCookie(w, user); err != nil {
 		jsonError(w, "Token error", http.StatusInternalServerError)
 		return
@@ -98,6 +99,7 @@ func (h *AuthHandler) issueLogin(w http.ResponseWriter, user models.User) {
 		"display_name":          h.displayName(user.UserID, user.Username),
 		"is_admin":              user.IsAdmin,
 		"force_password_change": user.ForcePassword,
+		"redirect":              h.safeReturnURL(r, redirect),
 	})
 }
 
@@ -164,51 +166,57 @@ func (h *AuthHandler) MicrosoftStart(w http.ResponseWriter, r *http.Request) {
 	}
 	state := base64.RawURLEncoding.EncodeToString(stateBytes)
 	h.setOAuthStateCookie(w, state, 600)
+	h.setOAuthReturnCookie(w, h.safeReturnURL(r, r.URL.Query().Get("redirect")), 600)
 	redirectURI := h.microsoftRedirectURI(r, settings)
 	http.Redirect(w, r, microsoft.AuthorizationURL(settings, redirectURI, state), http.StatusFound)
 }
 
 func (h *AuthHandler) MicrosoftCallback(w http.ResponseWriter, r *http.Request) {
+	returnTo := "/"
+	if returnCookie, err := r.Cookie("cores_ms_oauth_return"); err == nil {
+		returnTo = h.safeReturnURL(r, returnCookie.Value)
+	}
+	h.setOAuthReturnCookie(w, "", -1)
 	if h.ms == nil {
-		h.redirectLoginError(w, r, "Microsoft-Anmeldung ist nicht verfügbar")
+		h.redirectLoginError(w, r, "Microsoft-Anmeldung ist nicht verfügbar", returnTo)
 		return
 	}
 	stateCookie, err := r.Cookie("cores_ms_oauth_state")
 	if err != nil || stateCookie.Value == "" || stateCookie.Value != r.URL.Query().Get("state") {
-		h.redirectLoginError(w, r, "Ungültiger oder abgelaufener Anmeldestatus")
+		h.redirectLoginError(w, r, "Ungültiger oder abgelaufener Anmeldestatus", returnTo)
 		return
 	}
 	h.setOAuthStateCookie(w, "", -1)
 	if providerError := r.URL.Query().Get("error"); providerError != "" {
-		h.redirectLoginError(w, r, firstNonEmptyString(r.URL.Query().Get("error_description"), providerError))
+		h.redirectLoginError(w, r, firstNonEmptyString(r.URL.Query().Get("error_description"), providerError), returnTo)
 		return
 	}
 	code := r.URL.Query().Get("code")
 	if code == "" {
-		h.redirectLoginError(w, r, "Microsoft hat keinen Anmeldecode geliefert")
+		h.redirectLoginError(w, r, "Microsoft hat keinen Anmeldecode geliefert", returnTo)
 		return
 	}
 	settings, err := h.ms.GetSettings(r.Context())
 	if err != nil || !settings.UsesMicrosoftLogin() {
-		h.redirectLoginError(w, r, "Microsoft-Anmeldung ist deaktiviert")
+		h.redirectLoginError(w, r, "Microsoft-Anmeldung ist deaktiviert", returnTo)
 		return
 	}
 	profile, err := h.ms.AuthenticateCode(r.Context(), settings, code, h.microsoftRedirectURI(r, settings))
 	if err != nil {
-		h.redirectLoginError(w, r, err.Error())
+		h.redirectLoginError(w, r, err.Error(), returnTo)
 		return
 	}
 	var user models.User
 	err = h.db.Where("identity_source = ? AND external_id = ? AND is_active = ?", "microsoft", profile.ID, true).First(&user).Error
 	if err != nil {
-		h.redirectLoginError(w, r, "Dieses Microsoft-Konto gehört nicht zur konfigurierten Cores-Gruppe oder wurde noch nicht synchronisiert")
+		h.redirectLoginError(w, r, "Dieses Microsoft-Konto gehört nicht zur konfigurierten Cores-Gruppe oder wurde noch nicht synchronisiert", returnTo)
 		return
 	}
 	if err := h.setSessionCookie(w, user); err != nil {
-		h.redirectLoginError(w, r, "Cores-Sitzung konnte nicht erstellt werden")
+		h.redirectLoginError(w, r, "Cores-Sitzung konnte nicht erstellt werden", returnTo)
 		return
 	}
-	http.Redirect(w, r, "/", http.StatusFound)
+	http.Redirect(w, r, returnTo, http.StatusFound)
 }
 
 func (h *AuthHandler) microsoftRedirectURI(r *http.Request, settings microsoft.Settings) string {
@@ -234,8 +242,71 @@ func (h *AuthHandler) setOAuthStateCookie(w http.ResponseWriter, value string, m
 	})
 }
 
-func (h *AuthHandler) redirectLoginError(w http.ResponseWriter, r *http.Request, message string) {
-	http.Redirect(w, r, "/login?error="+url.QueryEscape(message), http.StatusFound)
+func (h *AuthHandler) setOAuthReturnCookie(w http.ResponseWriter, value string, maxAge int) {
+	http.SetCookie(w, &http.Cookie{
+		Name: "cores_ms_oauth_return", Value: value, Path: "/api/v1/auth/microsoft/",
+		Domain: h.cfg.CookieDomain, HttpOnly: true, Secure: h.cfg.CookieDomain != "",
+		SameSite: http.SameSiteLaxMode, MaxAge: maxAge,
+	})
+}
+
+func (h *AuthHandler) redirectLoginError(w http.ResponseWriter, r *http.Request, message, redirect string) {
+	query := url.Values{"error": {message}}
+	if safe := h.safeReturnURL(r, redirect); safe != "/" {
+		query.Set("redirect", safe)
+	}
+	http.Redirect(w, r, "/login?"+query.Encode(), http.StatusFound)
+}
+
+func (h *AuthHandler) safeReturnURL(r *http.Request, raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" || strings.Contains(raw, "\\") {
+		return "/"
+	}
+	parsed, err := url.Parse(raw)
+	if err != nil {
+		return "/"
+	}
+	if !parsed.IsAbs() {
+		if parsed.Host != "" || !strings.HasPrefix(parsed.Path, "/") || strings.HasPrefix(parsed.Path, "//") {
+			return "/"
+		}
+		return parsed.String()
+	}
+	if parsed.User != nil || (parsed.Scheme != "https" && parsed.Scheme != "http") {
+		return "/"
+	}
+	allowed := []string{
+		requestOrigin(r),
+		h.cfg.RentalPublicURL,
+		h.cfg.WarehousePublicURL,
+		h.cfg.PlannercorePublicURL,
+		h.cfg.ProcurementPublicURL,
+	}
+	for _, candidate := range allowed {
+		base, parseErr := url.Parse(strings.TrimSpace(candidate))
+		if parseErr == nil && base.Scheme != "" && base.Host != "" &&
+			strings.EqualFold(parsed.Scheme, base.Scheme) && strings.EqualFold(parsed.Host, base.Host) {
+			return parsed.String()
+		}
+	}
+	return "/"
+}
+
+func requestOrigin(r *http.Request) string {
+	scheme := strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-Proto"), ",")[0])
+	if scheme == "" {
+		if r.TLS != nil {
+			scheme = "https"
+		} else {
+			scheme = "http"
+		}
+	}
+	host := strings.TrimSpace(strings.Split(r.Header.Get("X-Forwarded-Host"), ",")[0])
+	if host == "" {
+		host = r.Host
+	}
+	return scheme + "://" + host
 }
 
 func firstNonEmptyString(values ...string) string {
