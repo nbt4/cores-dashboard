@@ -1,5 +1,14 @@
 # Cores Dashboard
 
+## Sitzungsprüfung (1.14.31)
+
+Jede geschützte Anfrage prüft das Ablaufdatum des HS256-Tokens und lädt den aktuellen
+Kontostatus sowie die Administratorrolle über `cores-common v1.2.0`.
+Gesperrte oder gelöschte Benutzer erhalten 401; entzogene Administratorrechte
+führen bei Admin-Endpunkten zu 403, auch mit einem zuvor ausgestellten Token.
+Datenbankfehler verweigern Zugriff. `GET /health` prüft die Datenbank mit einem
+Zwei-Sekunden-Limit und liefert bei Fehlern 503.
+
 Das Dashboard veröffentlicht außerdem den eigenständigen, rein lesenden Cores-MCP-Dienst unter `/mcp` und leitet dessen OAuth- sowie Discovery-Endpunkte unverändert weiter. Dadurch können ChatGPT, Claude und andere MCP-Clients den bestehenden Cores-Login auf derselben öffentlichen Domain verwenden. Das interne Ziel wird mit `CORES_MCP_URL` konfiguriert (Standard: `http://cores-mcp:8090`).
 
 ## Einheitliches Cores Designsystem

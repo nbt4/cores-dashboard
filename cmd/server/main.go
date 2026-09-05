@@ -27,6 +27,7 @@ import (
 	"coresdashboard/internal/middleware"
 	"coresdashboard/internal/proxy"
 	commonbranding "github.com/nbt4/cores-common/pkg/branding"
+	commonjwt "github.com/nbt4/cores-common/pkg/jwt"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -56,9 +57,11 @@ func main() {
 
 	// Set initial DB connection gauge
 	sqlDB, err := db.DB()
-	if err == nil {
-		metrics.DBConnectionsOpen.Set(float64(sqlDB.Stats().OpenConnections))
+	if err != nil {
+		log.Fatal().Err(err).Msg("DB handle failed")
 	}
+	metrics.DBConnectionsOpen.Set(float64(sqlDB.Stats().OpenConnections))
+	lookupUser := commonjwt.DatabaseUserLookup(sqlDB)
 
 	// Audit logger
 	auditLogger := audit.NewAuditLogger(sqlDB)
@@ -69,7 +72,7 @@ func main() {
 
 	// requireAdmin wrapper
 	requireAdmin := func(next http.Handler) http.Handler {
-		return middleware.RequireAdmin(cfg, next)
+		return middleware.RequireAdmin(cfg, lookupUser, next)
 	}
 
 	mux := http.NewServeMux()
@@ -104,20 +107,22 @@ func main() {
 	// Health endpoint (before auth middleware)
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+		defer cancel()
 		sqlDB, err := db.DB()
-		if err != nil || sqlDB.Ping() != nil {
+		if err != nil || sqlDB.PingContext(ctx) != nil {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			json.NewEncoder(w).Encode(map[string]string{
 				"status":  "error",
 				"service": "cores-dashboard",
-				"version": "1.14.30",
+				"version": "1.14.31",
 			})
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]string{
 			"status":  "ok",
 			"service": "cores-dashboard",
-			"version": "1.14.30",
+			"version": "1.14.31",
 		})
 	})
 
@@ -139,7 +144,7 @@ func main() {
 	mux.HandleFunc("GET /api/v1/auth/microsoft/start", authHandler.MicrosoftStart)
 	mux.HandleFunc("GET /api/v1/auth/microsoft/callback", authHandler.MicrosoftCallback)
 
-	protected := middleware.RequireAuth(cfg, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	protected := middleware.RequireAuth(cfg, lookupUser, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.URL.Path == "/api/v1/auth/me":
 			authHandler.Me(w, r)
@@ -151,7 +156,7 @@ func main() {
 	}))
 
 	// FIXED: Admin auth bypass — admin and proxy routes now use RequireAdmin middleware
-	adminProtected := middleware.RequireAdmin(cfg, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	adminProtected := middleware.RequireAdmin(cfg, lookupUser, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch {
 		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/admin/branding":
 			brandingHandler.GetBranding(w, r)
