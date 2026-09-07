@@ -1,6 +1,13 @@
 # Cores Dashboard
 
-## Sitzungsprüfung (1.14.31)
+## M365-Raumkalender (1.14.32)
+
+Die Microsoft-Einrichtung beschreibt die RentalCore-Kalender-Mailbox jetzt als
+Exchange-Raumressource und zeigt die vollständige `Set-CalendarProcessing`-Konfiguration.
+Pro Job wird ein zentraler Raumtermin geführt; Bearbeiter sind automatisch bestätigte
+Teilnehmer desselben Meetings statt Empfänger eigenständiger RentalCore-Termine.
+
+## Sitzungsprüfung
 
 Jede geschützte Anfrage prüft das Ablaufdatum des HS256-Tokens und lädt den aktuellen
 Kontostatus sowie die Administratorrolle über `cores-common v1.2.0`.
@@ -165,7 +172,7 @@ Funktionen ohnehin die Live-APIs benötigt.
 
 Die Konfiguration erfolgt unter **Benutzer & Rechte → Microsoft 365 & Entra**. Microsoft-Benutzer werden als Cores-Schattenkonten mit stabiler interner ID gespeichert. Ihre Stammdaten sind im Dashboard schreibgeschützt; Cores-Rollen bleiben unabhängig davon lokal pflegbar. Beim Entfernen aus der konfigurierten Gruppe werden Konten standardmäßig deaktiviert, nicht gelöscht.
 
-Erforderlich sind Tenant-ID, Client-ID, der Client-Secret-**Wert**, die Objekt-ID der erlaubten Gruppe und die öffentliche Cores-URL. Die App benötigt für den Benutzer-Sync die Microsoft-Graph-Anwendungsrechte `User.Read.All` und `GroupMember.Read.All`; für die Anmeldung wird delegiert `User.Read` verwendet. RentalCore benötigt optional zusätzlich `Contacts.ReadWrite`, `Calendars.ReadWrite` und für GAL-/Exchange-Verwaltung die passende Exchange-App-Berechtigung plus RBAC-Zuweisung. Details und die exakte Redirect-URI zeigt das Hilfe-Popup direkt im Dashboard.
+Erforderlich sind Tenant-ID, Client-ID, der Client-Secret-**Wert**, die Objekt-ID der erlaubten Gruppe und die öffentliche Cores-URL. Die App benötigt für den Benutzer-Sync die Microsoft-Graph-Anwendungsrechte `User.Read.All` und `GroupMember.Read.All`; für die Anmeldung wird delegiert `User.Read` verwendet. RentalCore benötigt optional zusätzlich `Contacts.ReadWrite`, `Calendars.ReadWrite` und für GAL-/Exchange-Verwaltung die passende Exchange-App-Berechtigung plus RBAC-Zuweisung. Der RentalCore-Kalender wird als Exchange-Raumressource konfiguriert: Pro Job existiert dort genau ein Termin, zugewiesene Bearbeiter sind Teilnehmer desselben Meetings und werden ohne Antwortmail automatisch bestätigt. Details, Exchange-Befehle und die exakte Redirect-URI zeigt das Hilfe-Popup direkt im Dashboard.
 
 Referenzen: [Gruppenmitglieder lesen](https://learn.microsoft.com/en-us/graph/api/group-list-transitivemembers), [Benutzer lesen](https://learn.microsoft.com/en-us/graph/api/user-list), [OAuth Authorization Code](https://learn.microsoft.com/en-us/graph/auth-v2-user).
 
