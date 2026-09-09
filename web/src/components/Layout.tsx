@@ -1,15 +1,15 @@
 import type { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home, LogOut, User, ExternalLink, Menu, X, ChevronDown,
+  Home, LogOut, User, Menu, X, ChevronDown,
   Users, Shield, Layers, Lightbulb, Cpu, FolderTree, Tag, Ruler,
   Database, KeyRound, Download, Cable, ShoppingCart, BookUser, Wrench, Palette, Cloud,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useAppConfig } from '../hooks/useAppConfig';
 import { useBranding } from '../hooks/useBranding';
 import { suiteGreetingName } from '../lib/cores-design';
+import { SuiteCoreNavigation } from './SuiteCoreNavigation';
 
 const ADMIN_SECTIONS = [
   { label: 'Stammdaten', items: [
@@ -38,7 +38,6 @@ const ADMIN_SECTIONS = [
 ];
 
 function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () => void }) {
-  const config = useAppConfig();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -85,37 +84,7 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
           </div>
         ))}
 
-        {/* External links */}
-        <div className="mt-4 pt-4 border-t border-white/5 flex flex-col gap-0.5">
-          {config?.rentalUrl && (
-            <a href={config.rentalUrl}
-              className="flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors">
-              <ExternalLink className="w-4 h-4 flex-shrink-0" />
-              {expanded && <span>RentalCore</span>}
-            </a>
-          )}
-          {config?.warehouseUrl && (
-            <a href={config.warehouseUrl}
-              className="flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors">
-              <ExternalLink className="w-4 h-4 flex-shrink-0" />
-              {expanded && <span>WarehouseCore</span>}
-            </a>
-          )}
-          {config?.plannerUrl && (
-            <a href={config.plannerUrl}
-              className="flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors">
-              <ExternalLink className="w-4 h-4 flex-shrink-0" />
-              {expanded && <span>PlannerCore</span>}
-            </a>
-          )}
-          {config?.procurementUrl && (
-            <a href={config.procurementUrl}
-              className="flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-gray-400 hover:bg-white/5 hover:text-white transition-colors">
-              <ExternalLink className="w-4 h-4 flex-shrink-0" />
-              {expanded && <span>ProcurementCore</span>}
-            </a>
-          )}
-        </div>
+        <SuiteCoreNavigation dashboardURL="/" compact={!expanded} />
       </nav>
 
       {/* User + Security + Logout */}

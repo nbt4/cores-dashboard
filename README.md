@@ -1,5 +1,12 @@
 # Cores Dashboard
 
+## Einheitliche Core-Navigation (1.14.33)
+
+Alle Cores verwenden am Ende ihrer Fachnavigation dieselbe Core-Auswahl und
+einen eigenständigen Link zum Cores Dashboard. Das Dashboard liefert die
+öffentlichen Ziele dafür über seine Config-API auch an getrennte Core-Domains;
+im gemeinsamen Pfadmodus bleiben sämtliche Wechsel innerhalb derselben Origin.
+
 ## M365-Raumkalender (1.14.32)
 
 Die Microsoft-Einrichtung beschreibt die RentalCore-Kalender-Mailbox jetzt als
@@ -40,7 +47,7 @@ Alle Suchfelder im Dashboard und in der Administration verwenden das gemeinsame 
 - **Live-Operations-Cockpit** — Handlungsorientiertes Lagebild aus allen Cores-Services mit priorisierten Vorgängen, Umsatz, aktiven Jobs, Lagerbereitschaft, persönlichen Planner-Aufgaben, Beschaffungsfreigaben und direktem Einstieg in den zuständigen Arbeitsbereich
 - **Plattformgesundheit** — Parallele Healthchecks für alle fünf Cores-Dienste und PostgreSQL inklusive Versionen und Antwortzeiten; gestörte Komponenten erscheinen unmittelbar im Handlungsbedarf
 - **Branding & Theming** — Dynamisches Whitelabeling: eigenes Logo, Firmenname und Favicon pro Tenant. Upload über die Admin-Oberfläche
-- **Cross-Service Navigation** — Einheitliche Navbar mit direkten Links zu allen Sub-Services
+- **Cross-Service Navigation** — Einheitliche Core-Auswahl plus eigenständiger Dashboard-Link an derselben Sidebar-Position in allen Services
 - **Config API** — Öffentlicher Endpoint liefert alle Cross-Links und Branding-Daten für clientseitige Integration
 - **Statisches Embedding** — Frontend (React/Vite) und Backend (Go) in einem Binary via `embed`. Keine separaten Assets nötig
 - **Installierbare Mobile-App (PWA)** — Eigenes Homescreen-Icon, Standalone-Modus, Safe-Area-Unterstützung und touchoptimierte Navigation für iPhone, iPad und Android; im Pfadmodus bleiben alle Cores beim Wechsel innerhalb derselben Origin und damit ohne iOS-In-App-Browserleiste

@@ -29,6 +29,9 @@ func publicServiceURLs(cfg *config.Config) map[string]string {
 
 func ConfigHandler(cfg *config.Config, db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// The payload contains public navigation URLs only. Allow independently
+		// hosted Core frontends to resolve the same destinations as path mode.
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		serviceURLs := publicServiceURLs(cfg)
 		payload := map[string]interface{}{
 			"routingMode":    cfg.RoutingMode,
