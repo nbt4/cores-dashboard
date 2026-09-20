@@ -4,6 +4,7 @@ import {
   loadSuiteNavigation,
   suiteCoreLabels,
   suiteNavigationFallback,
+  suiteLocalizedURL,
   type SuiteCoreKey,
   type SuiteNavigationConfig,
 } from '../lib/cores-design';
@@ -31,7 +32,7 @@ export function SuiteCoreNavigation({ current, dashboardURL, compact = false }: 
 
   const changeCore = (next: string) => {
     if (!next || next === current) return;
-    window.location.assign(new URL(destinations[next as SuiteCoreKey], window.location.origin).toString());
+    window.location.assign(suiteLocalizedURL(destinations[next as SuiteCoreKey]));
   };
 
   return (
@@ -55,6 +56,10 @@ export function SuiteCoreNavigation({ current, dashboardURL, compact = false }: 
       <a
         className="suite-core-dashboard-link"
         href={dashboardURL}
+        onClick={(event) => {
+          event.preventDefault();
+          window.location.assign(suiteLocalizedURL(dashboardURL));
+        }}
         aria-current={current ? undefined : 'page'}
         title={compact ? 'Cores Dashboard' : undefined}
       >

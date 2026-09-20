@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useBranding } from '../hooks/useBranding';
 import { suiteGreetingName } from '../lib/cores-design';
 import { SuiteCoreNavigation } from './SuiteCoreNavigation';
+import { SuiteLanguageSwitcher } from '../lib/SuiteLanguageSwitcher';
 
 const ADMIN_SECTIONS = [
   { label: 'Stammdaten', items: [
@@ -89,6 +90,9 @@ function SidebarContent({ expanded, onClose }: { expanded: boolean; onClose: () 
 
       {/* User + Security + Logout */}
       <div className="p-2 border-t border-white/5 flex-shrink-0">
+        <div className="px-2 py-2">
+          <SuiteLanguageSwitcher compact={!expanded} />
+        </div>
         <Link to="/profile/security" onClick={onClose}
           className={`flex items-center gap-2 px-2 py-2 rounded-lg transition-colors ${isActive('/profile/security') ? 'bg-accent-red/10 text-accent-red' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
           <div className="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">

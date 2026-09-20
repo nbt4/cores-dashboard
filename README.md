@@ -1,5 +1,11 @@
 # Cores Dashboard
 
+## Deutsch und Englisch (1.14.34)
+
+Die Sidebar enthält die gemeinsame Cores-Sprachwahl. Sie speichert die Auswahl
+suiteweit und übersetzt Navigation, Administration, Status- und Aktionsbegriffe
+sowie zugängliche Beschriftungen; Begrüßung und Datum verwenden dasselbe Locale.
+
 ## Einheitliche Core-Navigation (1.14.33)
 
 Alle Cores verwenden am Ende ihrer Fachnavigation dieselbe Core-Auswahl und

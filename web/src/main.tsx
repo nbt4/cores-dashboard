@@ -3,6 +3,11 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import './cores-theme.css'
 import App from './App'
+import { initSuiteI18n, pairSuiteTranslations } from './lib/cores-design'
+import de from './lib/cores-locales/de.json'
+import en from './lib/cores-locales/en.json'
+
+initSuiteI18n(pairSuiteTranslations(de, en))
 
 document.addEventListener('wheel', (event) => {
   const target = event.target

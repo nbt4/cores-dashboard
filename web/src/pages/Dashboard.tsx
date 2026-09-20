@@ -9,7 +9,7 @@ import { api } from '../lib/api';
 import { toast } from '../lib/toast';
 import { useAppConfig } from '../hooks/useAppConfig';
 import { useAuth } from '../contexts/AuthContext';
-import { suiteGreeting } from '../lib/cores-design';
+import { suiteGreeting, suiteLocale } from '../lib/cores-design';
 
 interface ServiceHealth {
   status: string;
@@ -175,7 +175,7 @@ export function Dashboard() {
           <p className="suite-dashboard-subtitle">Was heute zählt – über alle Cores hinweg.</p>
         </div>
         <div className="suite-dashboard-actions">
-          {lastUpdated && <span className="suite-dashboard-timestamp">Aktualisiert {lastUpdated.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>}
+          {lastUpdated && <span className="suite-dashboard-timestamp">Aktualisiert {lastUpdated.toLocaleTimeString(suiteLocale(), { hour: '2-digit', minute: '2-digit' })}</span>}
           <button type="button" onClick={() => void load(true)} disabled={refreshing} className="suite-button"><RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />Aktualisieren</button>
         </div>
       </header>
@@ -276,13 +276,13 @@ function EmptyDashboard({ onRetry }: { onRetry: () => void }) {
 }
 
 function formatNumber(value?: number) {
-  return value === undefined ? '—' : value.toLocaleString('de-DE');
+  return value === undefined ? '—' : value.toLocaleString(suiteLocale());
 }
 
 function formatEuro(value?: number) {
-  return value === undefined ? '—' : value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+  return value === undefined ? '—' : value.toLocaleString(suiteLocale(), { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 }
 
 function formatEuroCents(value?: number) {
-  return value === undefined ? '—' : (value / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+  return value === undefined ? '—' : (value / 100).toLocaleString(suiteLocale(), { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 }
