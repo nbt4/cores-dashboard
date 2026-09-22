@@ -1,5 +1,12 @@
 # Cores Dashboard
 
+## Vollständige Dashboard-Lokalisierung (1.14.35)
+
+Die gemeinsame Sprachlogik übersetzt jetzt deutsche und englische Quelltexte in
+beide Richtungen. Dynamische Texte mit Zählern, Uhrzeiten und Statuswerten werden
+über Platzhalter lokalisiert; das Live-Lagebild ist dadurch einschließlich KPIs,
+Prioritäten, Arbeitsbereichen und Systemzustand vollständig zweisprachig.
+
 ## Deutsch und Englisch (1.14.34)
 
 Die Sidebar enthält die gemeinsame Cores-Sprachwahl. Sie speichert die Auswahl
