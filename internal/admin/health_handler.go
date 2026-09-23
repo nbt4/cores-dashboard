@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -51,6 +52,8 @@ type AggregatedHealth struct {
 	WarehouseCore   ServiceHealth `json:"warehousecore"`
 	PlannerCore     ServiceHealth `json:"plannercore"`
 	ProcurementCore ServiceHealth `json:"procurementcore"`
+	CoresMCP        ServiceHealth `json:"cores-mcp"`
+	Mosquitto       ServiceHealth `json:"mosquitto"`
 	Database        ServiceHealth `json:"database"`
 	Timestamp       string        `json:"timestamp"`
 }
@@ -64,7 +67,7 @@ type ServiceHealth struct {
 }
 
 // VERSION is the cores-dashboard version string.
-const VERSION = "1.14.37"
+const VERSION = "1.14.38"
 
 // ServeHTTP handles GET /api/v1/admin/health (admin-only).
 func (h *HealthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +110,7 @@ func (h *HealthHandler) Collect(ctx context.Context) AggregatedHealth {
 		{"warehousecore", h.cfg.WarehouseCoreURL + "/api/v1/health"},
 		{"plannercore", h.cfg.PlannercoreURL + "/health"},
 		{"procurementcore", h.cfg.ProcurementCoreURL + "/health"},
+		{"cores-mcp", h.cfg.CoresMCPURL + "/health"},
 	}
 
 	// Check all services concurrently
@@ -128,6 +132,8 @@ func (h *HealthHandler) Collect(ctx context.Context) AggregatedHealth {
 				agg.PlannerCore = sh
 			case "procurementcore":
 				agg.ProcurementCore = sh
+			case "cores-mcp":
+				agg.CoresMCP = sh
 			}
 			mu.Unlock()
 		}(svc)
@@ -143,9 +149,30 @@ func (h *HealthHandler) Collect(ctx context.Context) AggregatedHealth {
 		mu.Unlock()
 	}()
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		brokerHealth := h.checkTCPService(ctx, h.cfg.MosquittoAddress)
+		mu.Lock()
+		agg.Mosquitto = brokerHealth
+		mu.Unlock()
+	}()
+
 	wg.Wait()
 
 	return agg
+}
+
+func (h *HealthHandler) checkTCPService(parent context.Context, address string) ServiceHealth {
+	ctx, cancel := context.WithTimeout(parent, 3*time.Second)
+	defer cancel()
+	start := time.Now()
+	conn, err := (&net.Dialer{}).DialContext(ctx, "tcp", address)
+	if err != nil {
+		return ServiceHealth{Status: "unreachable", Error: fmt.Sprintf("TCP check failed: %v", err)}
+	}
+	_ = conn.Close()
+	return ServiceHealth{Status: "ok", LatencyMS: time.Since(start).Milliseconds()}
 }
 
 func (h *HealthHandler) checkService(parent context.Context, name, url string) ServiceHealth {

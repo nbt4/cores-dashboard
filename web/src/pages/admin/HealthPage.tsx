@@ -14,6 +14,8 @@ interface AggregatedHealth {
   warehousecore: ServiceHealth;
   plannercore: ServiceHealth;
   procurementcore: ServiceHealth;
+  'cores-mcp': ServiceHealth;
+  mosquitto: ServiceHealth;
   database: ServiceHealth;
   timestamp: string;
 }
@@ -24,6 +26,8 @@ const SERVICE_LABELS: Record<string, string> = {
   warehousecore: 'WarehouseCore',
   plannercore: 'PlannerCore',
   procurementcore: 'ProcurementCore',
+  'cores-mcp': 'Cores MCP',
+  mosquitto: 'MQTT-Broker',
   database: 'Datenbank',
 };
 
@@ -33,6 +37,8 @@ const SERVICE_ICONS: Record<string, React.ElementType> = {
   warehousecore: Server,
   plannercore: Server,
   procurementcore: Server,
+  'cores-mcp': Server,
+  mosquitto: Server,
   database: Database,
 };
 

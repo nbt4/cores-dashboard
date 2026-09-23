@@ -89,6 +89,8 @@ const SERVICE_NAMES: Record<string, string> = {
   warehousecore: 'WarehouseCore',
   plannercore: 'PlannerCore',
   procurementcore: 'ProcurementCore',
+  'cores-mcp': 'Cores MCP',
+  mosquitto: 'MQTT-Broker',
   database: 'Datenbank',
 };
 

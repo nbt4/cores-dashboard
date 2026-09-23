@@ -1,5 +1,14 @@
 # Cores Dashboard
 
+## Vollständiger Plattformstatus (1.14.38)
+
+Der Systemzustand im Lagebild und in der Administration prüft jetzt auch
+Cores-MCP und den MQTT-Broker. Cores-MCP wird über `CORES_MCP_URL/health`
+abgefragt; der Broker wird per TCP auf `MOSQUITTO_HEALTH_ADDRESS` geprüft
+(Standard `mosquitto:1883`). Beide zählen zum Plattformstatus und erscheinen
+bei Ausfall als gestörte Komponente. Die TCP-Prüfung bestätigt die
+Erreichbarkeit des Brokers, nicht die Anmeldung oder Zustellung von Nachrichten.
+
 ## Gemeinsames Etikettenbogen-Vokabular (1.14.37)
 
 Die suiteweiten Deutsch-/Englisch-Ressourcen enthalten jetzt auch A4-
@@ -74,7 +83,7 @@ Alle Suchfelder im Dashboard und in der Administration verwenden das gemeinsame 
 - **Zentrale Microsoft-App** — Eine App-Registrierung für Entra-Benutzer, Cores-Login sowie RentalCore-Kontakt-/Kalenderfunktionen; inklusive Einrichtungs- und Rechtehilfe im Dashboard
 - **Globales Routing** — Ein Schalter legt suiteweit entweder die Pfade `/rentalcore/`, `/warehousecore/`, `/plannercore/` und `/procurementcore/` oder eigene Subdomains fest; Mischbetrieb ist ausgeschlossen
 - **Live-Operations-Cockpit** — Handlungsorientiertes Lagebild aus allen Cores-Services mit priorisierten Vorgängen, Umsatz, aktiven Jobs, Lagerbereitschaft, persönlichen Planner-Aufgaben, Beschaffungsfreigaben und direktem Einstieg in den zuständigen Arbeitsbereich
-- **Plattformgesundheit** — Parallele Healthchecks für alle fünf Cores-Dienste und PostgreSQL inklusive Versionen und Antwortzeiten; gestörte Komponenten erscheinen unmittelbar im Handlungsbedarf
+- **Plattformgesundheit** — Parallele Healthchecks für alle fünf Cores-Dienste, Cores-MCP, MQTT-Broker und PostgreSQL inklusive verfügbarer Versionen und Antwortzeiten; gestörte Komponenten erscheinen unmittelbar im Handlungsbedarf
 - **Branding & Theming** — Dynamisches Whitelabeling: eigenes Logo, Firmenname und Favicon pro Tenant. Upload über die Admin-Oberfläche
 - **Cross-Service Navigation** — Einheitliche Core-Auswahl plus eigenständiger Dashboard-Link an derselben Sidebar-Position in allen Services
 - **Flexibler Datentransfer** — Feldselektive CSV-/XLSX-Exporte und vorschaubasierte Importe mit headerbasierter Zuordnung und spaltenweisen Konfliktregeln
