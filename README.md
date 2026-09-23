@@ -1,5 +1,11 @@
 # Cores Dashboard
 
+## Gemeinsames Etikettenbogen-Vokabular (1.14.37)
+
+Die suiteweiten Deutsch-/Englisch-Ressourcen enthalten jetzt auch A4-
+Etikettenbögen, Papieroptionen, individuelle Stückzahlen und dynamische
+Druckmeldungen des WarehouseCore-Druckcenters.
+
 ## Flexibler Datentransfer (1.14.36)
 
 Die zentrale Administration ersetzt die festen CSV-Karten durch einen geführten
