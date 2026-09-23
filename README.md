@@ -1,5 +1,15 @@
 # Cores Dashboard
 
+## Flexibler Datentransfer (1.14.36)
+
+Die zentrale Administration ersetzt die festen CSV-Karten durch einen geführten
+Import-/Export-Arbeitsbereich. Für Produkte, Geräte, Kontakte, Hersteller,
+Marken, Kategorien, Lagerbereiche, Kabel und Jobs lassen sich Exportfelder,
+Spaltennamen, CSV-Trennzeichen oder XLSX frei wählen. CSV- und XLSX-Importe
+werden anhand ihrer Überschriften zugeordnet und vor dem Schreiben validiert;
+bestehende Datensätze können übersprungen oder je Spalte kontrolliert
+zusammengeführt werden.
+
 ## Vollständige Dashboard-Lokalisierung (1.14.35)
 
 Die gemeinsame Sprachlogik übersetzt jetzt deutsche und englische Quelltexte in
@@ -61,6 +71,7 @@ Alle Suchfelder im Dashboard und in der Administration verwenden das gemeinsame 
 - **Plattformgesundheit** — Parallele Healthchecks für alle fünf Cores-Dienste und PostgreSQL inklusive Versionen und Antwortzeiten; gestörte Komponenten erscheinen unmittelbar im Handlungsbedarf
 - **Branding & Theming** — Dynamisches Whitelabeling: eigenes Logo, Firmenname und Favicon pro Tenant. Upload über die Admin-Oberfläche
 - **Cross-Service Navigation** — Einheitliche Core-Auswahl plus eigenständiger Dashboard-Link an derselben Sidebar-Position in allen Services
+- **Flexibler Datentransfer** — Feldselektive CSV-/XLSX-Exporte und vorschaubasierte Importe mit headerbasierter Zuordnung und spaltenweisen Konfliktregeln
 - **Config API** — Öffentlicher Endpoint liefert alle Cross-Links und Branding-Daten für clientseitige Integration
 - **Statisches Embedding** — Frontend (React/Vite) und Backend (Go) in einem Binary via `embed`. Keine separaten Assets nötig
 - **Installierbare Mobile-App (PWA)** — Eigenes Homescreen-Icon, Standalone-Modus, Safe-Area-Unterstützung und touchoptimierte Navigation für iPhone, iPad und Android; im Pfadmodus bleiben alle Cores beim Wechsel innerhalb derselben Origin und damit ohne iOS-In-App-Browserleiste

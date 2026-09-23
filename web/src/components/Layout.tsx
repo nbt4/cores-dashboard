@@ -33,7 +33,7 @@ const ADMIN_SECTIONS = [
     { path: '/admin/controllers', label: 'ESP-Controller', icon: Cpu },
     { path: '/admin/apisettings', label: 'API-Einstellungen', icon: Database },
     { path: '/admin/apikeys', label: 'API-Keys', icon: KeyRound },
-    { path: '/admin/export', label: 'CSV-Export', icon: Download },
+    { path: '/admin/export', label: 'Datenimport/-export', icon: Download },
     { path: '/admin/branding', label: 'Branding', icon: Palette },
   ]},
 ];
