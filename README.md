@@ -1,6 +1,6 @@
 # Cores Dashboard
 
-## Vollständiger Plattformstatus (1.14.38)
+## Vollständiger Plattformstatus (1.14.39)
 
 Der Systemzustand im Lagebild und in der Administration prüft jetzt auch
 Cores-MCP und den MQTT-Broker. Cores-MCP wird über `CORES_MCP_URL/health`
