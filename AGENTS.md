@@ -52,7 +52,14 @@ Nötige Umgebungsvariablen: siehe `cores/.env.example` (verbindliche Quelle). F�
 ## 4. Test- und Build-Befehle
 
 Diese Befehle sind das Test-Gate. **Alle müssen grün sein, bevor ein Pull Request
-entsteht.** Reihenfolge einhalten — die schnellen Prüfungen zuerst.
+entsteht.**
+
+**Die Reihenfolge ist bindend, nicht nur empfohlen. Die Stufen laufen nacheinander, nie
+parallel.** Die schnellen Prüfungen stehen zuerst. Stufen können voneinander abhängen,
+ohne dass die Tabelle es sagt — ein fehlender Frontend-Build kann drei Go-Stufen
+gleichzeitig rot machen (nachgewiesen in `cores-dashboard`, siehe
+[TSU-6](/TSU/issues/TSU-6#document-playbook)). Nach dem ersten echten Fehler wird
+angehalten.
 
 | # | Gate | Befehl | Dauer (ca.) |
 |---|---|---|---|
@@ -77,6 +84,27 @@ Regeln:
   Eine eigene Testumgebung wird gerade aufgebaut (eigene Paperclip-Aufgabe). Bis sie
   steht: nur lokale Container mit eigenem Volume.
 - Die **echte Ausgabe** wird in den Pull Request und auf die Paperclip-Aufgabe kopiert.
+- **Ein Testlauf aus dem Cache ist kein Nachweis.** Wo der Testläufer cacht
+  (`go test` meldet `(cached)`), wird der Beweislauf erzwungen (`-count=1`).
+
+### Bekannt rote Stufen
+
+Eine Stufe, die im Altbestand nicht grün werden kann, wird hier benannt — mit Verweis auf
+ihre eigene Paperclip-Aufgabe. Sie ist die **einzige** erlaubte Ausnahme und deckt keine
+andere Stufe. Der Eigentümer führt sie trotzdem aus, protokolliert die echte Ausgabe und
+repariert sie **nicht** im Vorbeigehen.
+
+| Stufe | Grund | Aufgabe |
+|---|---|---|
+| — | keine Ausnahme | — |
+
+Ist die Tabelle leer, gibt es keine Ausnahme: jede rote Stufe heißt anhalten und
+zurückfragen.
+
+Stufe 2 (`cd web && npm run lint`) ist im Altbestand nicht grün, weil `eslint` in
+`web/package.json` fehlt. Die Entscheidung dazu steht in
+[TSU-20](/TSU/issues/TSU-20) noch aus. Solange sie offen ist, bleibt die Tabelle leer und
+es gilt die Regel: anhalten und zurückfragen.
 
 ## 5. Code-Stil
 
