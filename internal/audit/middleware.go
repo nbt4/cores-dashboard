@@ -65,7 +65,8 @@ func methodToAction(method string) string {
 
 // extractResourceID pulls a numeric ID from the end of the URL path.
 // e.g. /api/v1/admin/customers/123 → "123"
-//       /api/v1/admin/branding → ""
+//
+//	/api/v1/admin/branding → ""
 func extractResourceID(path string) string {
 	// Remove trailing slash
 	path = strings.TrimSuffix(path, "/")
